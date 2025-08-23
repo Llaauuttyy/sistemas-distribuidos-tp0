@@ -187,3 +187,11 @@ Genera y guarda el archivo utilizando manejo de strings.
 
 Se ejecuta de la siguiente manera:
 `./generar-compose.sh <filename> <clients_number_to_generate>`
+
+### Ejercicio 2
+Se agregaron los archivos de configuración directamente en el yaml usando volúmenes.
+Se removieron variables de entorno que definían el nivel del log den el yaml.
+Se aplicaron los cambios al generador mi-generador.py
+
+Por lo tanto, ya no es necesario hacer un nuevo build al cambiar datos de los 
+archivos de configuración tanto para el server como para el cliente.
