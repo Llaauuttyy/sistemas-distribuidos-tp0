@@ -190,7 +190,7 @@ Se ejecuta de la siguiente manera:
 
 ### Ejercicio 2
 Se agregaron los archivos de configuración directamente en el yaml usando volúmenes.
-Se removieron variables de entorno que definían el nivel del log den el yaml.
+Se removieron variables de entorno que definían el nivel del log en el yaml.
 Se aplicaron los cambios al generador mi-generador.py
 
 Por lo tanto, ya no es necesario hacer un nuevo build al cambiar datos de los 
