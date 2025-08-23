@@ -213,4 +213,6 @@ Se ejecuta de la siguiente manera:
 `./validar-echo-server.sh`
 
 ### Ejercicio 4
+Supongo que el server inicia normalmente.
 Agrego timeout en server socket para que el server no se quede siempre bloqueado con .accept().
+flag -t <n> envia SIGTERM al container y espera n segundos para que termine el programa y en caso de no terminar envia SIGKILL

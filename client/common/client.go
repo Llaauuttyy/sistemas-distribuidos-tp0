@@ -66,7 +66,9 @@ func (c *Client) StartClientLoop() {
         log.Infof("action: shutdown_signal | result: in_progress | client_id: %v", c.config.ID)
 		c.running = false
 		if c.conn != nil {
+			log.Infof("action: closed_client_socket | result: in_progress | client_id: %v", c.config.ID)
 			c.conn.Close()
+			log.Infof("action: closed_client_socket | result: success | client_id: %v", c.config.ID)
 		}
 		log.Infof("action: shutdown_signal | result: success | client_id: %v", c.config.ID)
 	}()
