@@ -26,7 +26,8 @@ class Server:
         # the server
         while self._running:
             self._client_socket = self.__accept_new_connection()
-            self.__handle_client_connection(self._client_socket)
+            if self._client_socket:
+                self.__handle_client_connection(self._client_socket)
 
     def __handle_client_connection(self, client_sock):
         """
@@ -43,7 +44,7 @@ class Server:
             # TODO: Modify the send to avoid short-writes
             client_sock.send("{}\n".format(msg).encode('utf-8'))
         except OSError as e:
-            logging.error("action: receive_message | result: fail | error: {e}")
+            logging.error(f"action: receive_message | result: fail | error: {e}")
         finally:
             client_sock.close()
 
@@ -56,10 +57,13 @@ class Server:
         """
 
         # Connection arrived
-        logging.info('action: accept_connections | result: in_progress')
-        c, addr = self._server_socket.accept()
-        logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
-        return c
+        try:
+            logging.info('action: accept_connections | result: in_progress')
+            c, addr = self._server_socket.accept()
+            logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
+            return c
+        except OSError:
+            return None
     
     def _graceful_shutdown(self, signum, frame):
         logging.info("action: graceful_shutdown | result: in_progress")
