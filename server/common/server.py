@@ -75,8 +75,8 @@ class Server:
     def _terminate(self):
         if self._client_socket:
             self._client_socket.close()
-            logging.info("action: terminate | action: closed_client_socket | result: success")
+            logging.info("action: closed_client_socket | result: success")
 
         self._server_socket.close()
-        logging.info("action: terminate | action: closed_server_socket | result: success")
+        logging.info("action: closed_server_socket | result: success")
         logging.info("action: graceful_shutdown | result: success")
