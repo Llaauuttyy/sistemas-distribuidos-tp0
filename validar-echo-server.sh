@@ -3,7 +3,6 @@ MESSAGE="reply-to-me"
 
 SERVER_RESPONSE=$(
     docker run --rm --network tp0_testing_net alpine sh -c "\
-    apk add --no-cache netcat-openbsd >/dev/null 2>&1 && \
     echo '$MESSAGE' | nc server 12345 \
 ")
 

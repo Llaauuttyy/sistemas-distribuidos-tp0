@@ -195,3 +195,7 @@ Se aplicaron los cambios al generador mi-generador.py
 
 Por lo tanto, ya no es necesario hacer un nuevo build al cambiar datos de los 
 archivos de configuración tanto para el server como para el cliente.
+
+### Ejercicio 3
+Se supone que la network está activa.
+La imagen de alpine ya viene con netcat.
