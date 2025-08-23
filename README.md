@@ -195,3 +195,19 @@ Se aplicaron los cambios al generador mi-generador.py
 
 Por lo tanto, ya no es necesario hacer un nuevo build al cambiar datos de los 
 archivos de configuración tanto para el server como para el cliente.
+
+### Ejercicio 3
+Se creó el archivo validar-echo-server.sh
+Para ello se utilizó docker para crear un container temporal, utilizando
+la imagen de alpine, que es una distribución minimal de linux. Dicha distribución ya cuenta con netcat, por eso es que no se vuelve a instalar.
+
+En principio, se supone que la network está activa.
+
+Explicación del comando:
+- `--rm`: Remueve el container luego de que finalizó.
+- `--network`: Agrega al container a dicha network. Lo cual permite que dicho container sea visible para el server y pueda verlo.
+- `sh -c`: Ejecuto comando en shell del container.
+- `echo '$MESSAGE' | nc server 12345`: Envío `$MESSAGE` al server en el puerto 12345.
+
+Se ejecuta de la siguiente manera:
+`./validar-echo-server.sh`
