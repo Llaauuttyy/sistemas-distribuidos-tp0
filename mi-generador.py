@@ -17,7 +17,6 @@ services:
       - ./server/config.ini:/config.ini
     environment:
       - PYTHONUNBUFFERED=1
-      - LOGGING_LEVEL=DEBUG
     networks:
       - testing_net
 """ 
@@ -34,7 +33,6 @@ services:
       - ./client/config.yaml:/config.yaml
     environment:
       - CLI_ID=1
-      - CLI_LOG_LEVEL=DEBUG
     networks:
       - testing_net
     depends_on:
