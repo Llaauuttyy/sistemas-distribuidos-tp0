@@ -3,6 +3,9 @@ package common
 import (
 	"bufio"
 	"fmt"
+	"os"
+    "os/signal"
+    "syscall"
 	"net"
 	"time"
 
@@ -52,6 +55,18 @@ func (c *Client) createClientSocket() error {
 
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
+	sigs := make(chan os.Signal, 1)
+
+	signal.Notify(sigs, syscall.SIGTERM)
+	done := make(chan bool, 1)
+	
+	go func() {
+		sig := <-sigs
+        fmt.Println()
+        fmt.Println(sig)
+        done <- true
+	}()
+		
 	// There is an autoincremental msgID to identify every message sent
 	// Messages if the message amount threshold has not been surpassed
 	for msgID := 1; msgID <= c.config.LoopAmount; msgID++ {
