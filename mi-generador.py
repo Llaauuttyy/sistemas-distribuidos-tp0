@@ -1,8 +1,8 @@
 import sys
 
 class DockerYamlGenerator:
-    def __init__(self, clients: int):
-        self.filename = "docker-compose-dev.yaml"
+    def __init__(self, filename: str, clients: int):
+        self.filename = filename
         self.clients = clients
 
     def _generate_string(self) -> str:
@@ -57,9 +57,13 @@ networks:
         self._save(content)
 
 def main():
-    clients_input: int = sys.argv[2] if len(sys.argv) > 2 else "1"
+    if len(sys.argv) != 3:
+        raise Exception("Missing params.")
+    
+    filename_input: str = sys.argv[1]
+    clients_input: int = sys.argv[2]
 
-    generator: DockerYamlGenerator = DockerYamlGenerator(clients=int(clients_input))
+    generator: DockerYamlGenerator = DockerYamlGenerator(filename=filename_input, clients=int(clients_input))
     generator.generate()
 
 main()
