@@ -34,7 +34,7 @@ type Client struct {
 func NewClient(config ClientConfig) *Client {
 	client := &Client{
 		config: config,
-		running: true
+		running: true,
 	}
 	return client
 }
