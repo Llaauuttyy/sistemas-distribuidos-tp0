@@ -7,8 +7,6 @@ SERVER_RESPONSE=$(
     echo '$MESSAGE' | nc server 12345 \
 ")
 
-echo "Server response: $SERVER_RESPONSE"
-
 if [ "$SERVER_RESPONSE" = "$MESSAGE" ]; then
   echo "action: test_echo_server | result: success"
 else
