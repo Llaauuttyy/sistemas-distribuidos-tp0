@@ -10,6 +10,7 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
+        self._server_socket.settimeout(0.2)
         self._client_socket = None
         self._running = True
 
@@ -28,6 +29,8 @@ class Server:
             self._client_socket = self.__accept_new_connection()
             if self._client_socket:
                 self.__handle_client_connection(self._client_socket)
+
+        self._terminate()
 
     def __handle_client_connection(self, client_sock):
         """
@@ -62,19 +65,18 @@ class Server:
             c, addr = self._server_socket.accept()
             logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
             return c
-        except OSError:
+        except socket.timeout:
             return None
     
     def _graceful_shutdown(self, signum, frame):
         logging.info("action: graceful_shutdown | result: in_progress")
-
         self._running = False
 
+    def _terminate(self):
         if self._client_socket:
             self._client_socket.close()
-            logging.info("action: graceful_shutdown | action: closed_client_socket | result: success")
+            logging.info("action: terminate | action: closed_client_socket | result: success")
 
         self._server_socket.close()
-        logging.info("action: graceful_shutdown | action: closed_server_socket | result: success")
-
+        logging.info("action: terminate | action: closed_server_socket | result: success")
         logging.info("action: graceful_shutdown | result: success")

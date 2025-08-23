@@ -211,3 +211,6 @@ Explicación del comando:
 
 Se ejecuta de la siguiente manera:
 `./validar-echo-server.sh`
+
+### Ejercicio 4
+Agrego timeout en server socket para que el server no se quede siempre bloqueado con .accept().
