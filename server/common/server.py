@@ -68,15 +68,16 @@ class Server:
         except socket.timeout:
             return None
     
-    def _graceful_shutdown(self, signum, frame):
+    def _graceful_shutdown(self, _signum, _frame):
         logging.info("action: graceful_shutdown | result: in_progress")
         self._running = False
 
     def _terminate(self):
         if self._client_socket:
+            logging.info("action: close_client_socket | result: in_progress")
             self._client_socket.close()
-            logging.info("action: closed_client_socket | result: success")
+            logging.info("action: close_client_socket | result: success")
 
         self._server_socket.close()
-        logging.info("action: closed_server_socket | result: success")
+        logging.info("action: close_server_socket | result: success")
         logging.info("action: graceful_shutdown | result: success")
