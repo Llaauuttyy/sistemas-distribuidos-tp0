@@ -2,6 +2,9 @@ import socket
 import logging
 import signal
 
+from server.common.protocol import CommunicationProtocol
+from server.common.utils import store_bets
+
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -37,13 +40,28 @@ class Server:
         If a problem arises in the communication with the client, the
         client socket will also be closed
         """
+        communicator = CommunicationProtocol(client_sock)
+
         try:
-            # TODO: Modify the receive to avoid short-reads
-            msg = client_sock.recv(1024).rstrip().decode('utf-8')
             addr = client_sock.getpeername()
-            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-            # TODO: Modify the send to avoid short-writes
-            client_sock.send("{}\n".format(msg).encode('utf-8'))
+
+            # Get bet from the client
+            bet_message = communicator.receive_message()
+            if bet_message is None:
+                raise Exception("Could not read message.")
+            logging.info(f'action: bet_received | result: success | ip: {addr[0]} | bet: {bet_message}')
+
+            store_bets([bet_message.content])
+            # Mixed languages in log to not modify tests.
+            logging.info(f'action: apuesta_almacenada | result: success | dni: {bet_message.content.dni} | numero: {bet_message.content.number}')
+
+            # Send ACK to the client
+            communicator.send_ack_message()
+
+            # client_sock.send("{}\n".format(msg).encode('utf-8'))
+        except Exception as e:
+            logging.error(f"action: receive_message | result: fail | error: {e}")
+
         except OSError as e:
             logging.error(f"action: receive_message | result: fail | error: {e}")
         finally:

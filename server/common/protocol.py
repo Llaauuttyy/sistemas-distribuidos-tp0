@@ -7,18 +7,20 @@ class Message:
         self.message_type = message_type
 
 class MessageACK(Message):
+    TYPE = 1
     TOTAL_BYTES = 1
     
     def __init__(self):
-        super().__init__(1)
+        super().__init__(self.TYPE)
 
     def to_bytes(self):
         """
         Serialize MessageACK to bytes.
         """
-        return self.message_type.to_bytes()
+        return self.message_type.to_bytes(self.TOTAL_BYTES, byteorder="big")
 
 class MessageBet(Message):
+    TYPE = 2
     FIELD_SIZES = {
         "agency": 20,
         "first_name": 20,
@@ -27,13 +29,17 @@ class MessageBet(Message):
         "birthdate": 10,
         "number": 8,
     }
-
     TOTAL_BYTES = sum(FIELD_SIZES.values())
 
     def __init__(self, agency: str, first_name: str, last_name: str, document: str, birthdate: str, number: str):
-        super().__init__(2)
-        self.bet = Bet(agency, first_name, last_name, document, birthdate, number)
+        super().__init__(self.TYPE)
+        self.content = Bet(agency, first_name, last_name, document, birthdate, number)
 
+    def __str__(self):
+        return f"MessageBet(agency={self.content.agency}, first_name={self.content.first_name}, " \
+               f"last_name={self.content.last_name}, document={self.content.document}, " \
+               f"birthdate={self.content.birthdate}, number={self.content.number})"
+    
     @staticmethod
     def from_bytes(data: bytes) -> "MessageBet":
         """
@@ -61,25 +67,52 @@ class CommunicationProtocol:
     def __init__(self, socket):
         self.socket = socket
 
-    def send_message(self, message: Message):
+    def _send_exact(self, bytes: bytes):
+        # Avoid short-writes: sendall method tries to send all data, and fails if it cannot.
+        self.socket.sendall(bytes + b'\n')
+
+    def _receive_exact(self, size: int) -> bytes:
         """
-        Send a message to the connected socket.
+        Receive exactly `size` bytes from the socket.
+        """
+        # Avoid short-reads: read until it has the exact number of bytes or returns exception.
+        data = bytearray()
+        while len(data) < size:
+            chunk = self.socket.recv(size - len(data))
+            if not chunk:
+                raise OSError("Connection closed or could not read exact bytes")
+            data.extend(chunk)
+        return bytes(data)
+    
+    def send_ack_message(self):
+        """
+        Send an ACK message to the connected socket.
         """
         try:
-            # Avoid short-writes: sendall method tries to send all data, and fails if it cannot.
-            self.socket.sendall(message + b'\n')
+            ack_message = MessageACK()
+            self._send_exact(ack_message.to_bytes())
         except OSError as e:
-            logging.error(f"action: send_message | result: fail | error: {e}")
-
+            logging.error(f"action: send_ack_message | result: fail | error: {e}")
+    
     def receive_message(self):
         """
         Receive a message from the connected socket.
         """
         try:
-            data = self.socket.recv(1024).rstrip()
-            if not data:
+            # Read message typr code
+            message_code_byte = self._receive_exact(1)
+            message_code = int.from_bytes(message_code_byte, byteorder="big")
+
+            if message_code == MessageBet.TYPE:
+                # Read the full message size
+                message_size = MessageBet.TOTAL_BYTES
+                message_data = self._receive_exact(message_size)
+                return MessageBet.from_bytes(message_data)
+            
+            else: 
+                logging.error(f"action: receive_message | result: fail | error: Unknown message type {message_code}")
                 return None
-            return data.decode('utf-8')
+
         except OSError as e:
             logging.error(f"action: receive_message | result: fail | error: {e}")
             return None

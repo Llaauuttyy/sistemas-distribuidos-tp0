@@ -227,3 +227,5 @@ Se ejecuta de la siguiente manera:
 - La goroutine espera a que llegue la señal al canal y una vez que llega, setea `running=false` y si hay una conexión activa la cierra.
 
 Todos los tests pasan :white_check_mark:
+
+### Ejercicio 5
