@@ -23,8 +23,6 @@ class Server:
         finishes, servers starts to accept new connections again
         """
 
-        # TODO: Modify this program to handle signal to graceful shutdown
-        # the server
         while self._running:
             self._client_socket = self.__accept_new_connection()
             if self._client_socket:
