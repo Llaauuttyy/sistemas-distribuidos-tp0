@@ -3,6 +3,9 @@ package common
 import (
 	"bufio"
 	"fmt"
+	"os"
+    "os/signal"
+    "syscall"
 	"net"
 	"time"
 
@@ -21,8 +24,9 @@ type ClientConfig struct {
 
 // Client Entity that encapsulates how
 type Client struct {
-	config ClientConfig
-	conn   net.Conn
+	config  ClientConfig
+	conn    net.Conn
+	running bool
 }
 
 // NewClient Initializes a new client receiving the configuration
@@ -30,6 +34,7 @@ type Client struct {
 func NewClient(config ClientConfig) *Client {
 	client := &Client{
 		config: config,
+		running: true,
 	}
 	return client
 }
@@ -52,9 +57,26 @@ func (c *Client) createClientSocket() error {
 
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
+	// Create a channel to handle to shutdown when signal is received.
+	sigs := make(chan os.Signal, 1)
+
+	signal.Notify(sigs, syscall.SIGTERM)
+	
+	go func() {
+		<-sigs
+        log.Infof("action: shutdown_signal | result: in_progress | client_id: %v", c.config.ID)
+		c.running = false
+		if c.conn != nil {
+			log.Infof("action: closed_client_socket | result: in_progress | client_id: %v", c.config.ID)
+			c.conn.Close()
+			log.Infof("action: closed_client_socket | result: success | client_id: %v", c.config.ID)
+		}
+		log.Infof("action: shutdown_signal | result: success | client_id: %v", c.config.ID)
+	}()
+		
 	// There is an autoincremental msgID to identify every message sent
 	// Messages if the message amount threshold has not been surpassed
-	for msgID := 1; msgID <= c.config.LoopAmount; msgID++ {
+	for msgID := 1; c.running && msgID <= c.config.LoopAmount; msgID++ {
 		// Create the connection the server in every loop iteration. Send an
 		c.createClientSocket()
 
