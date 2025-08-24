@@ -213,6 +213,17 @@ Se ejecuta de la siguiente manera:
 `./validar-echo-server.sh`
 
 ### Ejercicio 4
-Supongo que el server inicia normalmente.
-Agrego timeout en server socket para que el server no se quede siempre bloqueado con .accept().
-flag -t <n> envia SIGTERM al container y espera n segundos para que termine el programa y en caso de no terminar envia SIGKILL
+***Nota***: El flag `-t` en `docker compose -f docker-compose-dev.yaml stop -t 1` permite esperar `1` segundo luego de enviar **SIGTERM** al container para que finalice y en caso de no hacerlo envia **SIGKILL**.
+
+#### Server
+- Supongo que el server inicia normalmente.
+- Agrego timeout en server socket para que el server no se quede siempre bloqueado con .**accept()**.
+- Agrego booleano `running` en el server, así puedo definir cuando debe liberar lo recursos.
+- Utilizando signal, al llegar un **SIGTERM**, llamo a una función definida `_graceful_shutdown()` que setea `running=false`. Lo cual permite salir del loop de ejecución central, respetando la conexión actual y luego se utliza la función `_terminate()` para liberar los recursos.
+
+#### Client
+- Manejo de signals utilizando un canal de buffer definido y una goroutine.
+- También agrego booleano `running` para definir cuando dejar de conectarse al servidor.
+- La goroutine espera a que llegue la señal al canal y una vez que llega, setea `running=false` y si hay una conexión activa la cierra.
+
+Todos los tests pasan :white_check_mark:
