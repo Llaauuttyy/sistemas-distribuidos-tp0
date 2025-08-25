@@ -1,7 +1,7 @@
 package common
 
 import (
-	"bufio"
+	// "bufio"
 	// "fmt"
 	"os"
     "os/signal"
@@ -82,19 +82,15 @@ func (c *Client) StartClientLoop(bet protocol.MessageBet) {
 		// Create the connection the server in every loop iteration. Send an
 		c.createClientSocket()
 
-		// fmt.Fprintf(
-			// 	c.conn,
-			// 	"[CLIENT %v] Message N°%v\n",
-			// 	c.config.ID,
-			// 	msgID,
-			// )
 		// TODO: Modify the send to avoid short-write
+		cp := protocol.NewCommunicationProtocol(c.conn)
+
 		bytes := bet.ToBytes()
 		log.Infof("action: send_message | length: %v",
 			len(bytes),
 		)
 
-		_, err := c.conn.Write(bytes)
+		err := cp.SendMessage(bytes)
 		if err != nil {
 			log.Errorf("action: apuesta_enviada | result: fail | dni: %v | numero: %v | error: %v",
 				bet.Document,
@@ -102,26 +98,36 @@ func (c *Client) StartClientLoop(bet protocol.MessageBet) {
 				err,
 			)
 		}
+
 		log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v ",
 			bet.Document,
 			bet.Number,
 		)
 			
 		// TODO: Avoid short-read
-		msg, err := bufio.NewReader(c.conn).ReadString('\n')
+		ackMessage, err := cp.ReceiveAck()
 		c.conn.Close()
-
 		if err != nil {
-			log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
+			log.Errorf("action: receive_ack | result: fail | client_id: %v | error: %v",
 				c.config.ID,
 				err,
 			)
 			return
 		}
 
-		log.Infof("action: receive_message | result: success | client_id: %v | msg: %v",
+		if ackMessage.Number != bet.Number {
+			log.Errorf("action: receive_ack | result: fail | client_id: %v | error: invalid ack message | expected: %v, received: %v",
+				c.config.ID,
+				bet.Number,
+				ackMessage.Number,
+			)
+			return
+		}
+
+		log.Infof("action: receive_ack | result: success | client_id: %v | bet_number: %v | ack_number: %v",
 			c.config.ID,
-			msg,
+			bet.Number,
+			ackMessage.Number,
 		)
 
 		// Wait a time between sending one message and the next one

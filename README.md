@@ -229,3 +229,9 @@ Se ejecuta de la siguiente manera:
 Todos los tests pasan :white_check_mark:
 
 ### Ejercicio 5
+Explicar manejo de short write/read en Go y Python.
+Uso ACK y tipos para los mensajes.
+Uso el lottery number de ACK.
+Uso bloques fijos para los campos de los mensajes. Asumo que los bytes alcanzan para cada campo.
+
+

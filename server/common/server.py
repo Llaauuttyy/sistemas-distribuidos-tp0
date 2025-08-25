@@ -13,7 +13,7 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
-        self._server_socket.settimeout(0.2)
+        self._server_socket.settimeout(0.5)
         self._client_socket = None
         self._running = True
 
@@ -40,6 +40,8 @@ class Server:
         If a problem arises in the communication with the client, the
         client socket will also be closed
         """
+
+        # Create communication protocol instance
         communicator = CommunicationProtocol(client_sock)
 
         try:
@@ -56,9 +58,7 @@ class Server:
             logging.info(f'action: apuesta_almacenada | result: success | dni: {bet_message.content.document} | numero: {bet_message.content.number}')
 
             # Send ACK to the client
-            communicator.send_ack_message()
-
-            # client_sock.send("{}\n".format(msg).encode('utf-8'))
+            communicator.send_ack_message(bet_message.content.number)
         except Exception as e:
             logging.error(f"action: receive_message | result: fail | error: {e}")
 

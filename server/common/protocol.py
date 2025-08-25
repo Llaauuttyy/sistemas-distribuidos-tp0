@@ -8,16 +8,23 @@ class Message:
 
 class MessageACK(Message):
     TYPE = 1
-    TOTAL_BYTES = 1
+    FIELD_SIZES = {
+        "number": 8,
+    }
+    PAYLOAD_BYTES = sum(FIELD_SIZES.values())
     
-    def __init__(self):
+    def __init__(self, number: str):
         super().__init__(self.TYPE)
+        self.number = number
 
     def to_bytes(self):
         """
         Serialize MessageACK to bytes.
         """
-        return self.message_type.to_bytes(self.TOTAL_BYTES, byteorder="big")
+        data = self.message_type.to_bytes(1, byteorder="big")
+        data += self.number.to_bytes(self.FIELD_SIZES["number"], byteorder="big")
+
+        return data
 
 class MessageBet(Message):
     TYPE = 2
@@ -29,7 +36,7 @@ class MessageBet(Message):
         "birthdate": 10,
         "number": 8,
     }
-    TOTAL_BYTES = sum(FIELD_SIZES.values())
+    PAYLOAD_BYTES = sum(FIELD_SIZES.values())
 
     def __init__(self, agency: str, first_name: str, last_name: str, document: str, birthdate: str, number: str):
         super().__init__(self.TYPE)
@@ -84,12 +91,13 @@ class CommunicationProtocol:
             data.extend(chunk)
         return bytes(data)
     
-    def send_ack_message(self):
+    def send_ack_message(self, number):
         """
         Send an ACK message to the connected socket.
         """
         try:
-            ack_message = MessageACK()
+            ack_message = MessageACK(number=number)
+            logging.info(f"MANDANDO ACK MESSAGE DE TAMANIO: {len(ack_message.to_bytes())}")
             self._send_exact(ack_message.to_bytes())
         except OSError as e:
             logging.error(f"action: send_ack_message | result: fail | error: {e}")
@@ -106,7 +114,7 @@ class CommunicationProtocol:
 
             if message_code == MessageBet.TYPE:
                 # Read the full message size
-                message_size = MessageBet.TOTAL_BYTES
+                message_size = MessageBet.PAYLOAD_BYTES
                 message_data = self._receive_exact(message_size)
                 return MessageBet.from_bytes(message_data)
             
