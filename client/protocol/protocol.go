@@ -60,11 +60,6 @@ func (cp *CommunicationProtocol) ReceiveAck(number string) (error) {
 			return fmt.Errorf("receiveMessage error: %w", err)
 		}
 
-		log.Infof("action: receive_ack | length: %v | type: %v",
-			len(ackBytes),
-			typeByte[0],
-		)
-
 		// Parse the ack message
 		ack, err := MessageAckFromBytes(ackBytes)
 		if err != nil {
