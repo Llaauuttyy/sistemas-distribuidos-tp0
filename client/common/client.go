@@ -91,7 +91,15 @@ func (c *Client) StartClientLoop(bet bet.Bet) {
 		// 	len(bytes),
 		// )
 
-		err := cp.SendBet(bet)
+		message := protocol.MessageBet{
+			Agency:    bet.Agency,
+			FirstName: bet.FirstName,
+			LastName:  bet.LastName,
+			Document:  bet.Document,
+			Birthdate: bet.Birthdate,
+			Number:    bet.Number,
+		}
+		err := cp.SendBet(message)
 		if err != nil {
 			log.Errorf("action: apuesta_enviada | result: fail | dni: %v | numero: %v | error: %v",
 				bet.Document,

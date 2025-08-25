@@ -6,7 +6,6 @@ import (
 	"io"
 
 	"github.com/op/go-logging"
-	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/bet"
 )
 
 var log = logging.MustGetLogger("log")
@@ -43,9 +42,8 @@ func (cp *CommunicationProtocol) ReceiveExactBytes(size int) ([]byte, error) {
 	return buf, nil
 }
 
-func (cp *CommunicationProtocol) SendBet(bet bet.Bet) error {
-	message := MessageBet{Bet: bet}
-	return cp.SendMessage(message.ToBytes())
+func (cp *CommunicationProtocol) SendBet(bet MessageBet) error {
+	return cp.SendMessage(bet.ToBytes())
 	
 }
 

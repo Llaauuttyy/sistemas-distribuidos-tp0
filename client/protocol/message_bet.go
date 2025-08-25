@@ -2,13 +2,17 @@ package protocol
 
 import (
 	"bytes"
-	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/bet"
 )
 
 const MessageBetType byte = 2
 
 type MessageBet struct {
-	Bet bet.Bet
+	Agency    string
+	FirstName string
+	LastName  string
+	Document  string
+	Birthdate string
+	Number    string
 }
 
 var MessageBetFieldSizes = map[string]int{
@@ -33,12 +37,12 @@ func (m *MessageBet) ToBytes() []byte {
 		buf.Write(data)
 	}
 
-	writeParams(m.Bet.Agency, MessageBetFieldSizes["Agency"])
-	writeParams(m.Bet.FirstName, MessageBetFieldSizes["FirstName"])
-	writeParams(m.Bet.LastName, MessageBetFieldSizes["LastName"])
-	writeParams(m.Bet.Document, MessageBetFieldSizes["Document"])
-	writeParams(m.Bet.Birthdate, MessageBetFieldSizes["Birthdate"])
-	writeParams(m.Bet.Number, MessageBetFieldSizes["Number"])
+	writeParams(m.Agency, MessageBetFieldSizes["Agency"])
+	writeParams(m.FirstName, MessageBetFieldSizes["FirstName"])
+	writeParams(m.LastName, MessageBetFieldSizes["LastName"])
+	writeParams(m.Document, MessageBetFieldSizes["Document"])
+	writeParams(m.Birthdate, MessageBetFieldSizes["Birthdate"])
+	writeParams(m.Number, MessageBetFieldSizes["Number"])
 
 	return buf.Bytes()
 }
