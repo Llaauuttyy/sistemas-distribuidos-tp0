@@ -1,6 +1,6 @@
 
 import logging
-from server.common.utils import Bet
+from common.utils import Bet
 
 class Message:
     def __init__(self, message_type: int):
@@ -23,8 +23,8 @@ class MessageBet(Message):
     TYPE = 2
     FIELD_SIZES = {
         "agency": 20,
-        "first_name": 20,
-        "last_name": 20,
+        "first_name": 30,
+        "last_name": 15,
         "document": 8,
         "birthdate": 10,
         "number": 8,
@@ -50,7 +50,7 @@ class MessageBet(Message):
         fields = {}
         for key, size in sizes.items():
             raw = data[offset:offset+size]
-            fields[key] = raw.decode("utf-8").strip()
+            fields[key] = raw.decode("utf-8").rstrip("\x00")
             offset += size
 
         return MessageBet(
@@ -93,6 +93,7 @@ class CommunicationProtocol:
             self._send_exact(ack_message.to_bytes())
         except OSError as e:
             logging.error(f"action: send_ack_message | result: fail | error: {e}")
+            raise Exception(f"Could not send ACK message: {e}")
     
     def receive_message(self):
         """

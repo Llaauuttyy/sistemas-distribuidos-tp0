@@ -2,8 +2,8 @@ import socket
 import logging
 import signal
 
-from server.common.protocol import CommunicationProtocol
-from server.common.utils import store_bets
+from common.protocol import CommunicationProtocol
+from common.utils import store_bets
 
 
 class Server:
@@ -53,7 +53,7 @@ class Server:
 
             store_bets([bet_message.content])
             # Mixed languages in log to not modify tests.
-            logging.info(f'action: apuesta_almacenada | result: success | dni: {bet_message.content.dni} | numero: {bet_message.content.number}')
+            logging.info(f'action: apuesta_almacenada | result: success | dni: {bet_message.content.document} | numero: {bet_message.content.number}')
 
             # Send ACK to the client
             communicator.send_ack_message()

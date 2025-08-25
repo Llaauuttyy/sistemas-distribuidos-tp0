@@ -2,14 +2,16 @@ package common
 
 import (
 	"bufio"
-	"fmt"
+	// "fmt"
 	"os"
     "os/signal"
     "syscall"
 	"net"
 	"time"
-
+	
 	"github.com/op/go-logging"
+	// "github.com/spf13/viper"
+	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/protocol"
 )
 
 var log = logging.MustGetLogger("log")
@@ -56,7 +58,7 @@ func (c *Client) createClientSocket() error {
 }
 
 // StartClientLoop Send messages to the client until some time threshold is met
-func (c *Client) StartClientLoop() {
+func (c *Client) StartClientLoop(bet protocol.MessageBet) {
 	// Create a channel to handle to shutdown when signal is received.
 	sigs := make(chan os.Signal, 1)
 
@@ -80,13 +82,32 @@ func (c *Client) StartClientLoop() {
 		// Create the connection the server in every loop iteration. Send an
 		c.createClientSocket()
 
+		// fmt.Fprintf(
+			// 	c.conn,
+			// 	"[CLIENT %v] Message N°%v\n",
+			// 	c.config.ID,
+			// 	msgID,
+			// )
 		// TODO: Modify the send to avoid short-write
-		fmt.Fprintf(
-			c.conn,
-			"[CLIENT %v] Message N°%v\n",
-			c.config.ID,
-			msgID,
+		bytes := bet.ToBytes()
+		log.Infof("action: send_message | length: %v",
+			len(bytes),
 		)
+
+		_, err := c.conn.Write(bytes)
+		if err != nil {
+			log.Errorf("action: apuesta_enviada | result: fail | dni: %v | numero: %v | error: %v",
+				bet.Document,
+				bet.Number,
+				err,
+			)
+		}
+		log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v ",
+			bet.Document,
+			bet.Number,
+		)
+			
+		// TODO: Avoid short-read
 		msg, err := bufio.NewReader(c.conn).ReadString('\n')
 		c.conn.Close()
 
