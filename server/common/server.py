@@ -51,7 +51,7 @@ class Server:
             bet_message = communicator.receive_message()
             if bet_message is None:
                 raise Exception("Could not read message.")
-            logging.info(f'action: bet_received | result: success | ip: {addr[0]} | bet: {bet_message}')
+            # logging.info(f'action: bet_received | result: success | ip: {addr[0]} | bet: {bet_message}')
 
             store_bets([bet_message.content])
             # Mixed languages in log to not modify tests.

@@ -86,18 +86,18 @@ func (c *Client) StartClientLoop(bet protocol.MessageBet) {
 		cp := protocol.NewCommunicationProtocol(c.conn)
 
 		bytes := bet.ToBytes()
-		log.Infof("action: send_message | length: %v",
-			len(bytes),
-		)
+		// log.Infof("action: send_message | length: %v",
+		// 	len(bytes),
+		// )
 
 		err := cp.SendMessage(bytes)
-		if err != nil {
-			log.Errorf("action: apuesta_enviada | result: fail | dni: %v | numero: %v | error: %v",
-				bet.Document,
-				bet.Number,
-				err,
-			)
-		}
+		// if err != nil {
+		// 	log.Errorf("action: apuesta_enviada | result: fail | dni: %v | numero: %v | error: %v",
+		// 		bet.Document,
+		// 		bet.Number,
+		// 		err,
+		// 	)
+		// }
 
 		log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v ",
 			bet.Document,
@@ -116,19 +116,19 @@ func (c *Client) StartClientLoop(bet protocol.MessageBet) {
 		}
 
 		if ackMessage.Number != bet.Number {
-			log.Errorf("action: receive_ack | result: fail | client_id: %v | error: invalid ack message | expected: %v, received: %v",
-				c.config.ID,
-				bet.Number,
-				ackMessage.Number,
-			)
+			// log.Errorf("action: receive_ack | result: fail | client_id: %v | error: invalid ack message | expected: %v, received: %v",
+			// 	c.config.ID,
+			// 	bet.Number,
+			// 	ackMessage.Number,
+			// )
 			return
 		}
 
-		log.Infof("action: receive_ack | result: success | client_id: %v | bet_number: %v | ack_number: %v",
-			c.config.ID,
-			bet.Number,
-			ackMessage.Number,
-		)
+		// log.Infof("action: receive_ack | result: success | client_id: %v | bet_number: %v | ack_number: %v",
+		// 	c.config.ID,
+		// 	bet.Number,
+		// 	ackMessage.Number,
+		// )
 
 		// Wait a time between sending one message and the next one
 		time.Sleep(c.config.LoopPeriod)
