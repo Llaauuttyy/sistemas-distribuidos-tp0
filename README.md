@@ -248,3 +248,5 @@ El protocolo consta con 2 mensajes:
 Cuentan con parámetros de tamaño fijo por parámetro. A priori, se asume que alcanzan los bytes definidos para almacenar esos parámetros.
 
 Los mensajes saben cómo serializarse y deserializarse.
+
+Todos los tests pasan :white_check_mark:
