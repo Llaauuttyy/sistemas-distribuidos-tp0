@@ -15,14 +15,14 @@ class MessageACK(Message):
     
     def __init__(self, number: str):
         super().__init__(self.TYPE)
-        self.number = number
+        self.number = int(number)
 
     def to_bytes(self):
         """
         Serialize MessageACK to bytes.
         """
         data = self.message_type.to_bytes(1, byteorder="big")
-        data += self.number.to_bytes(self.FIELD_SIZES["number"], byteorder="big")
+        data +=  self.number.to_bytes(self.FIELD_SIZES["number"], byteorder="big")
 
         return data
 
@@ -40,12 +40,17 @@ class MessageBet(Message):
 
     def __init__(self, agency: str, first_name: str, last_name: str, document: str, birthdate: str, number: str):
         super().__init__(self.TYPE)
-        self.content = Bet(agency, first_name, last_name, document, birthdate, number)
+        self.agency = agency
+        self.first_name = first_name
+        self.last_name = last_name
+        self.document = document
+        self.birthdate = birthdate
+        self.number = number
 
     def __str__(self):
-        return f"MessageBet(agency={self.content.agency}, first_name={self.content.first_name}, " \
-               f"last_name={self.content.last_name}, document={self.content.document}, " \
-               f"birthdate={self.content.birthdate}, number={self.content.number})"
+        return f"MessageBet(agency={self.agency}, first_name={self.first_name}, " \
+               f"last_name={self.last_name}, document={self.document}, " \
+               f"birthdate={self.birthdate}, number={self.number})"
     
     @staticmethod
     def from_bytes(data: bytes) -> "MessageBet":

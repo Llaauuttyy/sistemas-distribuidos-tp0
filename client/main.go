@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/common"
-	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/protocol"
+	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/bet"
 )
 
 var log = logging.MustGetLogger("log")
@@ -118,7 +118,7 @@ func main() {
 		LoopPeriod:    v.GetDuration("loop.period"),
 	}
 
-	bet := protocol.MessageBet{
+	bet := bet.Bet{
 		Agency:    fmt.Sprintf("%v", v.GetString("id")),
 		FirstName: fmt.Sprintf("%v", v.GetString("nombre")),
 		LastName:  fmt.Sprintf("%v", v.GetString("apellido")),

@@ -53,14 +53,14 @@ class Server:
                 raise Exception("Could not read message.")
             # logging.info(f'action: bet_received | result: success | ip: {addr[0]} | bet: {bet_message}')
 
-            store_bets([bet_message.content])
+            store_bets([bet_message])
             # Mixed languages in log to not modify tests.
-            logging.info(f'action: apuesta_almacenada | result: success | dni: {bet_message.content.document} | numero: {bet_message.content.number}')
+            logging.info(f'action: apuesta_almacenada | result: success | dni: {bet_message.document} | numero: {bet_message.number}')
 
             # Send ACK to the client
-            communicator.send_ack_message(bet_message.content.number)
-        except Exception as e:
-            logging.error(f"action: receive_message | result: fail | error: {e}")
+            communicator.send_ack_message(bet_message.number)
+        # except Exception as e:
+        #     logging.error(f"action: receive_message | result: fail | error: {e}")
 
         except OSError as e:
             logging.error(f"action: receive_message | result: fail | error: {e}")

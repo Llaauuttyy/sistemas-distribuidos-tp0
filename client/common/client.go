@@ -12,6 +12,7 @@ import (
 	"github.com/op/go-logging"
 	// "github.com/spf13/viper"
 	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/protocol"
+	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/bet"
 )
 
 var log = logging.MustGetLogger("log")
@@ -58,7 +59,7 @@ func (c *Client) createClientSocket() error {
 }
 
 // StartClientLoop Send messages to the client until some time threshold is met
-func (c *Client) StartClientLoop(bet protocol.MessageBet) {
+func (c *Client) StartClientLoop(bet bet.Bet) {
 	// Create a channel to handle to shutdown when signal is received.
 	sigs := make(chan os.Signal, 1)
 
@@ -85,42 +86,33 @@ func (c *Client) StartClientLoop(bet protocol.MessageBet) {
 		// TODO: Modify the send to avoid short-write
 		cp := protocol.NewCommunicationProtocol(c.conn)
 
-		bytes := bet.ToBytes()
+		// bytes := bet.ToBytes()
 		// log.Infof("action: send_message | length: %v",
 		// 	len(bytes),
 		// )
 
-		err := cp.SendMessage(bytes)
-		// if err != nil {
-		// 	log.Errorf("action: apuesta_enviada | result: fail | dni: %v | numero: %v | error: %v",
-		// 		bet.Document,
-		// 		bet.Number,
-		// 		err,
-		// 	)
-		// }
+		err := cp.SendBet(bet)
+		if err != nil {
+			log.Errorf("action: apuesta_enviada | result: fail | dni: %v | numero: %v | error: %v",
+				bet.Document,
+				bet.Number,
+				err,
+			)
+		}
 
 		log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v ",
 			bet.Document,
 			bet.Number,
 		)
 			
-		// TODO: Avoid short-read
-		ackMessage, err := cp.ReceiveAck()
+		err = cp.ReceiveAck(bet.Number)
 		c.conn.Close()
+
 		if err != nil {
 			log.Errorf("action: receive_ack | result: fail | client_id: %v | error: %v",
 				c.config.ID,
 				err,
 			)
-			return
-		}
-
-		if ackMessage.Number != bet.Number {
-			// log.Errorf("action: receive_ack | result: fail | client_id: %v | error: invalid ack message | expected: %v, received: %v",
-			// 	c.config.ID,
-			// 	bet.Number,
-			// 	ackMessage.Number,
-			// )
 			return
 		}
 
