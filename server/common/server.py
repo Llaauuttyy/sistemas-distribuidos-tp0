@@ -2,6 +2,9 @@ import socket
 import logging
 import signal
 
+from protocol.protocol import CommunicationProtocol
+from common.utils import store_bets
+
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -10,7 +13,7 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
-        self._server_socket.settimeout(0.2)
+        self._server_socket.settimeout(0.5)
         self._client_socket = None
         self._running = True
 
@@ -23,8 +26,6 @@ class Server:
         finishes, servers starts to accept new connections again
         """
 
-        # TODO: Modify this program to handle signal to graceful shutdown
-        # the server
         while self._running:
             self._client_socket = self.__accept_new_connection()
             if self._client_socket:
@@ -39,13 +40,28 @@ class Server:
         If a problem arises in the communication with the client, the
         client socket will also be closed
         """
+
+        # Create communication protocol instance
+        communicator = CommunicationProtocol(client_sock)
+
         try:
-            # TODO: Modify the receive to avoid short-reads
-            msg = client_sock.recv(1024).rstrip().decode('utf-8')
             addr = client_sock.getpeername()
-            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-            # TODO: Modify the send to avoid short-writes
-            client_sock.send("{}\n".format(msg).encode('utf-8'))
+
+            # Get bet from the client
+            bet_message = communicator.receive_message()
+            if bet_message is None:
+                raise Exception("Could not read message.")
+            # logging.info(f'action: bet_received | result: success | ip: {addr[0]} | bet: {bet_message}')
+
+            store_bets([bet_message])
+            # Mixed languages in log to not modify tests.
+            logging.info(f'action: apuesta_almacenada | result: success | dni: {bet_message.document} | numero: {bet_message.number}')
+
+            # Send ACK to the client
+            communicator.send_ack_message(bet_message.number)
+        except Exception as e:
+            logging.error(f"action: receive_message | result: fail | error: {e}")
+
         except OSError as e:
             logging.error(f"action: receive_message | result: fail | error: {e}")
         finally:

@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/common"
+	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/bet"
 )
 
 var log = logging.MustGetLogger("log")
@@ -37,6 +38,13 @@ func InitConfig() (*viper.Viper, error) {
 	v.BindEnv("loop", "period")
 	v.BindEnv("loop", "amount")
 	v.BindEnv("log", "level")
+
+	// Get bet from environment variables
+	v.BindEnv("nombre")
+	v.BindEnv("apellido")
+	v.BindEnv("documento")
+	v.BindEnv("nacimiento")
+	v.BindEnv("numero")
 
 	// Try to read configuration from config file. If config file
 	// does not exists then ReadInConfig will fail but configuration
@@ -110,6 +118,15 @@ func main() {
 		LoopPeriod:    v.GetDuration("loop.period"),
 	}
 
+	bet := bet.Bet{
+		Agency:    fmt.Sprintf("%v", v.GetString("id")),
+		FirstName: fmt.Sprintf("%v", v.GetString("nombre")),
+		LastName:  fmt.Sprintf("%v", v.GetString("apellido")),
+		Document:  fmt.Sprintf("%v", v.GetString("documento")),
+		Birthdate: fmt.Sprintf("%v", v.GetString("nacimiento")),
+		Number:    fmt.Sprintf("%v", v.GetString("numero")),
+	}
+
 	client := common.NewClient(clientConfig)
-	client.StartClientLoop()
+	client.StartClientLoop(bet)
 }

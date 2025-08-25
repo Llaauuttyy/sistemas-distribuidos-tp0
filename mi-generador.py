@@ -32,7 +32,12 @@ services:
     volumes:
       - ./client/config.yaml:/config.yaml
     environment:
-      - CLI_ID=1
+      - CLI_ID={i + 1}
+      - CLI_NOMBRE=Cliente{i + 1}
+      - CLI_APELLIDO=surname
+      - CLI_DOCUMENTO=30904465
+      - CLI_NACIMIENTO=1990-01-01
+      - CLI_NUMERO=7574
     networks:
       - testing_net
     depends_on:

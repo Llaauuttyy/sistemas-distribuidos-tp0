@@ -1,15 +1,18 @@
 package common
 
 import (
-	"bufio"
-	"fmt"
+	// "bufio"
+	// "fmt"
 	"os"
     "os/signal"
     "syscall"
 	"net"
 	"time"
-
+	
 	"github.com/op/go-logging"
+	// "github.com/spf13/viper"
+	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/protocol"
+	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/bet"
 )
 
 var log = logging.MustGetLogger("log")
@@ -56,7 +59,7 @@ func (c *Client) createClientSocket() error {
 }
 
 // StartClientLoop Send messages to the client until some time threshold is met
-func (c *Client) StartClientLoop() {
+func (c *Client) StartClientLoop(bet bet.Bet) {
 	// Create a channel to handle to shutdown when signal is received.
 	sigs := make(chan os.Signal, 1)
 
@@ -80,28 +83,48 @@ func (c *Client) StartClientLoop() {
 		// Create the connection the server in every loop iteration. Send an
 		c.createClientSocket()
 
-		// TODO: Modify the send to avoid short-write
-		fmt.Fprintf(
-			c.conn,
-			"[CLIENT %v] Message N°%v\n",
-			c.config.ID,
-			msgID,
+		cp := protocol.NewCommunicationProtocol(c.conn)
+
+		message := protocol.MessageBet{
+			Agency:    bet.Agency,
+			FirstName: bet.FirstName,
+			LastName:  bet.LastName,
+			Document:  bet.Document,
+			Birthdate: bet.Birthdate,
+			Number:    bet.Number,
+		}
+		err := cp.SendBet(message)
+		if err != nil {
+			log.Errorf("action: apuesta_enviada | result: fail | dni: %v | numero: %v | error: %v",
+				bet.Document,
+				bet.Number,
+				err,
+			)
+			c.conn.Close()
+			return
+		}
+
+		log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v ",
+			bet.Document,
+			bet.Number,
 		)
-		msg, err := bufio.NewReader(c.conn).ReadString('\n')
+			
+		err = cp.ReceiveAck(bet.Number)
 		c.conn.Close()
 
 		if err != nil {
-			log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
+			log.Errorf("action: receive_ack | result: fail | client_id: %v | error: %v",
 				c.config.ID,
 				err,
 			)
 			return
 		}
 
-		log.Infof("action: receive_message | result: success | client_id: %v | msg: %v",
-			c.config.ID,
-			msg,
-		)
+		// log.Infof("action: receive_ack | result: success | client_id: %v | bet_number: %v | ack_number: %v",
+		// 	c.config.ID,
+		// 	bet.Number,
+		// 	ackMessage.Number,
+		// )
 
 		// Wait a time between sending one message and the next one
 		time.Sleep(c.config.LoopPeriod)
