@@ -14,7 +14,6 @@ type CommunicationProtocol struct {
 	conn net.Conn
 }
 
-
 func NewCommunicationProtocol(conn net.Conn) *CommunicationProtocol {
 	return &CommunicationProtocol{conn: conn}
 }
@@ -32,7 +31,7 @@ func (cp *CommunicationProtocol) SendMessage(msg []byte) error {
 	return nil
 }
 
-// Avois short-read: used ReafFull to ensure the entire message is received
+// Avois short-read: used ReadFull to ensure the entire message is received
 func (cp *CommunicationProtocol) ReceiveExactBytes(size int) ([]byte, error) {
 	buf := make([]byte, size)
 	_, err := io.ReadFull(cp.conn, buf)
@@ -44,7 +43,6 @@ func (cp *CommunicationProtocol) ReceiveExactBytes(size int) ([]byte, error) {
 
 func (cp *CommunicationProtocol) SendBet(bet MessageBet) error {
 	return cp.SendMessage(bet.ToBytes())
-	
 }
 
 func (cp *CommunicationProtocol) ReceiveAck(number string) (error) {

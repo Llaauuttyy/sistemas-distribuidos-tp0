@@ -1,4 +1,4 @@
-from common.base import Message
+from protocol.base import Message
 
 class MessageBet(Message):
     TYPE = 2

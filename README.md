@@ -229,9 +229,22 @@ Se ejecuta de la siguiente manera:
 Todos los tests pasan :white_check_mark:
 
 ### Ejercicio 5
-Explicar manejo de short write/read en Go y Python.
-Uso ACK y tipos para los mensajes.
-Uso el lottery number de ACK.
-Uso bloques fijos para los campos de los mensajes. Asumo que los bytes alcanzan para cada campo.
+Se implementó un protocolo tanto en Python como en Go. El cual utiliza la conexión actual para enviar y recibir mensajes. 
 
+Por el momento, no hay timeouts, ni retries.
 
+Se evitan **Short Reads**:
+- En **Go**: Se usa `io.ReadFull()` que permite leer la cantidad de bytes que tenga el buffer y sino puede devuelve error.
+- En **Python**: Se tiene un bucle que lee hasta obtener todos los bytes o devuelve error.
+
+Se evitan **Short Writes**:
+- En **Go**: Se usa `Write()` hasta escribir todos los bytes necesarios o devuelve error.
+- En **Python**: Se utiliza `sendall()` que intenta enviar todos los bytes o devuelve error.
+
+El protocolo consta con 2 mensajes:
+- MessageBet: Contiene los datos de la apuesta.
+- MessageAck: Ack del envío de la apuesta. Nota: Usa el número de lotería como ID.
+
+Cuentan con parámetros de tamaño fijo por parámetro. A priori, se asume que alcanzan los bytes definidos para almacenar esos parámetros.
+
+Los mensajes saben cómo serializarse y deserializarse.

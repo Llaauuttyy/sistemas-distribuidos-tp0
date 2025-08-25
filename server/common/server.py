@@ -2,7 +2,7 @@ import socket
 import logging
 import signal
 
-from common.protocol import CommunicationProtocol
+from protocol.protocol import CommunicationProtocol
 from common.utils import store_bets
 
 
@@ -59,8 +59,8 @@ class Server:
 
             # Send ACK to the client
             communicator.send_ack_message(bet_message.number)
-        # except Exception as e:
-        #     logging.error(f"action: receive_message | result: fail | error: {e}")
+        except Exception as e:
+            logging.error(f"action: receive_message | result: fail | error: {e}")
 
         except OSError as e:
             logging.error(f"action: receive_message | result: fail | error: {e}")

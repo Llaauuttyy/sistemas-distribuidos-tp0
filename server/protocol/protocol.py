@@ -1,7 +1,7 @@
 
 import logging
-from common.ack import MessageACK
-from common.bet import MessageBet
+from protocol.ack import MessageACK
+from protocol.bet import MessageBet
 
 class CommunicationProtocol:
     def __init__(self, socket):
@@ -30,7 +30,6 @@ class CommunicationProtocol:
         """
         try:
             ack_message = MessageACK(number=number)
-            # logging.info(f"MANDANDO ACK MESSAGE DE TAMANIO: {len(ack_message.to_bytes())}")
             self._send_exact(ack_message.to_bytes())
         except OSError as e:
             logging.error(f"action: send_ack_message | result: fail | error: {e}")

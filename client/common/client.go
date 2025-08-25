@@ -83,13 +83,7 @@ func (c *Client) StartClientLoop(bet bet.Bet) {
 		// Create the connection the server in every loop iteration. Send an
 		c.createClientSocket()
 
-		// TODO: Modify the send to avoid short-write
 		cp := protocol.NewCommunicationProtocol(c.conn)
-
-		// bytes := bet.ToBytes()
-		// log.Infof("action: send_message | length: %v",
-		// 	len(bytes),
-		// )
 
 		message := protocol.MessageBet{
 			Agency:    bet.Agency,
@@ -106,6 +100,8 @@ func (c *Client) StartClientLoop(bet bet.Bet) {
 				bet.Number,
 				err,
 			)
+			c.conn.Close()
+			return
 		}
 
 		log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v ",

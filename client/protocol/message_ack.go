@@ -21,6 +21,8 @@ func MessageAckFromBytes(data []byte) (*MessageAck, error) {
 	}
 
 	numberBytes := data[:MessageAckFieldSizes["Number"]]
+
+	// Convert bytes to number
 	number := binary.BigEndian.Uint64(numberBytes)
 
 	return &MessageAck{
