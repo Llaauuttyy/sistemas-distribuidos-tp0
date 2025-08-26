@@ -31,7 +31,7 @@ services:
     entrypoint: /client
     volumes:
       - ./client/config.yaml:/config.yaml
-      ./.data/agency{i + 1}.csv:/agency{i + 1}.csv
+      - ./.data/agency-{i + 1}.csv:/agency-{i + 1}.csv
     environment:
       - CLI_ID={i + 1}
     networks:
