@@ -68,7 +68,7 @@ class Server:
             # TODO IMPORTANTE: Comentar que en EJ5 se pasó el mensajeBet pero debería haberse pasado el objeto Bet.
             bets = []
             for bet in bet_chunk_message.bets:
-                logging.info(f'action: bet_received | result: success | ip: {addr[0]} | bet: {bet}')
+                # logging.info(f'action: bet_received | result: success | ip: {addr[0]} | bet: {bet}')
                 bets.append(Bet(bet.agency, bet.first_name, bet.last_name, bet.document, bet.birthdate, bet.number))
 
             self.__handle_store_bets(communicator, bets)
