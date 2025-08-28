@@ -38,7 +38,7 @@ class Server:
         try:
             store_bets(bets)
         except Exception as e:
-            logging.error(f"action: store_bets | result: fail | error: {e}")
+            logging.error(f'action: apuesta_recibida | result: fail | cantidad: {len(bets)}')
             
             # Send Chunk Error message to the client
             communicator.send_chunk_error_message(bets[0].number)
@@ -63,9 +63,9 @@ class Server:
             bet_chunk_message = communicator.receive_message()
             if bet_chunk_message is None:
                 raise Exception("Could not read message.")
-            # logging.info(f'action: bet_received | result: success | ip: {addr[0]} | bet: {bet_message}')
 
             # TODO IMPORTANTE: Comentar que en EJ5 se pasó el mensajeBet pero debería haberse pasado el objeto Bet.
+
             bets = []
             for bet in bet_chunk_message.bets:
                 # logging.info(f'action: bet_received | result: success | ip: {addr[0]} | bet: {bet}')
@@ -74,7 +74,7 @@ class Server:
             self.__handle_store_bets(communicator, bets)
 
             # Mixed languages in log to not modify tests.
-            logging.info(f'action: apuesta_almacenada | result: success | cantidad: {len(bet_chunk_message.bets)}')
+            logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(bet_chunk_message.bets)}')
 
             # Send ACK to the client
             communicator.send_ack_message(bet_chunk_message.bets[0].number)
