@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/common"
-	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/bet"
+	// "github.com/7574-sistemas-distribuidos/docker-compose-init/client/bet"
 )
 
 var log = logging.MustGetLogger("log")
@@ -38,13 +38,14 @@ func InitConfig() (*viper.Viper, error) {
 	v.BindEnv("loop", "period")
 	v.BindEnv("loop", "amount")
 	v.BindEnv("log", "level")
+	v.BindEnv("batch", "maxAmount")
 
 	// Get bet from environment variables
-	v.BindEnv("nombre")
-	v.BindEnv("apellido")
-	v.BindEnv("documento")
-	v.BindEnv("nacimiento")
-	v.BindEnv("numero")
+	// v.BindEnv("nombre")
+	// v.BindEnv("apellido")
+	// v.BindEnv("documento")
+	// v.BindEnv("nacimiento")
+	// v.BindEnv("numero")
 
 	// Try to read configuration from config file. If config file
 	// does not exists then ReadInConfig will fail but configuration
@@ -118,15 +119,18 @@ func main() {
 		LoopPeriod:    v.GetDuration("loop.period"),
 	}
 
-	bet := bet.Bet{
-		Agency:    fmt.Sprintf("%v", v.GetString("id")),
-		FirstName: fmt.Sprintf("%v", v.GetString("nombre")),
-		LastName:  fmt.Sprintf("%v", v.GetString("apellido")),
-		Document:  fmt.Sprintf("%v", v.GetString("documento")),
-		Birthdate: fmt.Sprintf("%v", v.GetString("nacimiento")),
-		Number:    fmt.Sprintf("%v", v.GetString("numero")),
-	}
+	// bet := bet.Bet{
+	// 	Agency:    fmt.Sprintf("%v", v.GetString("id")),
+	// 	FirstName: fmt.Sprintf("%v", v.GetString("nombre")),
+	// 	LastName:  fmt.Sprintf("%v", v.GetString("apellido")),
+	// 	Document:  fmt.Sprintf("%v", v.GetString("documento")),
+	// 	Birthdate: fmt.Sprintf("%v", v.GetString("nacimiento")),
+	// 	Number:    fmt.Sprintf("%v", v.GetString("numero")),
+	// }
+
+	betFile := fmt.Sprintf("./agency-%v.csv", v.GetString("id"))
+	maxBatchSize := v.GetInt("batch.maxAmount")
 
 	client := common.NewClient(clientConfig)
-	client.StartClientLoop(bet)
+	client.StartClientLoop(betFile, maxBatchSize)
 }
