@@ -69,6 +69,7 @@ func (c *Client) createClientReader(filePath string) error {
 			c.config.ID,
 			err,
 		)
+		return err
 	}
 	c.reader = betReader
 	return nil
@@ -127,7 +128,10 @@ func (c *Client) StartClientLoop(betFile string, maxBatchSize int) {
 		c.Close()
 	}()
 	
-	c.createClientReader(betFile)
+	err := c.createClientReader(betFile)
+	if err != nil {
+		return
+	}
 
 	// There is an autoincremental msgID to identify every message sent
 	// Messages if the message amount threshold has not been surpassed
