@@ -100,21 +100,6 @@ func (c *Client) PrepareBetsToBeSent(bets []bet.Bet) []protocol.MessageBet {
 	return messageBets
 }
 
-func (c *Client) Close() {
-	c.running = false
-	if c.conn != nil {
-		log.Infof("action: closed_client_socket | result: in_progress | client_id: %v", c.config.ID)
-		c.conn.Close()
-		log.Infof("action: closed_client_socket | result: success | client_id: %v", c.config.ID)
-	}
-	if c.reader != nil {
-		log.Infof("action: closed_client_reader | result: in_progress | client_id: %v", c.config.ID)
-		c.reader.Close()
-		log.Infof("action: closed_client_reader | result: success | client_id: %v", c.config.ID)
-	}
-	
-}
-
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop(betFile string, maxBatchSize int) {
 	// Create a channel to handle to shutdown when signal is received.
@@ -196,4 +181,18 @@ func (c *Client) StartClientLoop(betFile string, maxBatchSize int) {
 
 	}
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
+}
+
+func (c *Client) Close() {
+	c.running = false
+	if c.conn != nil {
+		log.Infof("action: closed_client_socket | result: in_progress | client_id: %v", c.config.ID)
+		c.conn.Close()
+		log.Infof("action: closed_client_socket | result: success | client_id: %v", c.config.ID)
+	}
+	if c.reader != nil {
+		log.Infof("action: closed_client_reader | result: in_progress | client_id: %v", c.config.ID)
+		c.reader.Close()
+		log.Infof("action: closed_client_reader | result: success | client_id: %v", c.config.ID)
+	}
 }
