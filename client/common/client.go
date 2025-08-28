@@ -12,7 +12,7 @@ import (
 	"github.com/op/go-logging"
 	// "github.com/spf13/viper"
 	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/protocol"
-	// "github.com/7574-sistemas-distribuidos/docker-compose-init/client/bet"
+	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/bet"
 	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/reader"
 )
 
@@ -30,6 +30,7 @@ type ClientConfig struct {
 type Client struct {
 	config  ClientConfig
 	conn    net.Conn
+	reader *reader.BetReader
 	running bool
 }
 
@@ -59,6 +60,44 @@ func (c *Client) createClientSocket() error {
 	return nil
 }
 
+// CreateClientReader Initializes client reader.
+func (c *Client) createClientReader(filePath string) error {
+	betReader, err := reader.NewBetReader(filePath)
+	if err != nil {
+		log.Criticalf(
+			"action: reader | result: fail | client_id: %v | error: %v",
+			c.config.ID,
+			err,
+		)
+	}
+	c.reader = betReader
+	return nil
+}
+
+func (c *Client) CloseIfNoMoreBets(bets []bet.Bet) bool {
+	if len(bets) == 0 {
+		c.Close()
+		return true
+	}
+
+	return false
+}
+
+func (c *Client) Close() {
+	c.running = false
+	if c.conn != nil {
+		log.Infof("action: closed_client_socket | result: in_progress | client_id: %v", c.config.ID)
+		c.conn.Close()
+		log.Infof("action: closed_client_socket | result: success | client_id: %v", c.config.ID)
+	}
+	if c.reader != nil {
+		log.Infof("action: closed_client_reader | result: in_progress | client_id: %v", c.config.ID)
+		c.reader.Close()
+		log.Infof("action: closed_client_reader | result: success | client_id: %v", c.config.ID)
+	}
+	
+}
+
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop(betFile string, maxBatchSize int) {
 	// Create a channel to handle to shutdown when signal is received.
@@ -69,47 +108,27 @@ func (c *Client) StartClientLoop(betFile string, maxBatchSize int) {
 	go func() {
 		<-sigs
         log.Infof("action: shutdown_signal | result: in_progress | client_id: %v", c.config.ID)
-		c.running = false
-		if c.conn != nil {
-			log.Infof("action: closed_client_socket | result: in_progress | client_id: %v", c.config.ID)
-			c.conn.Close()
-			log.Infof("action: closed_client_socket | result: success | client_id: %v", c.config.ID)
-		}
-		log.Infof("action: shutdown_signal | result: success | client_id: %v", c.config.ID)
+		c.Close()
 	}()
-		
-	betReader, err := reader.NewBetReader(betFile)
-	if err != nil {
-		log.Criticalf("action: open_bet_file | result: fail | client_id: %v | file: %v | error: %v",
-			c.config.ID,
-			betFile,
-			err,
-		)
-		return
-	}
+	
+	c.createClientReader(betFile)
+	
 	// There is an autoincremental msgID to identify every message sent
 	// Messages if the message amount threshold has not been surpassed
 	for msgID := 1; c.running; msgID++ {
 
-		bets, err := betReader.ReadBets(maxBatchSize)
+		bets, err := c.reader.ReadBets(maxBatchSize)
 		if err != nil {
 			log.Criticalf("action: read_bet_file | result: fail | client_id: %v | file: %v | error: %v",
 				c.config.ID,
 				betFile,
 				err,
 			)
-			betReader.Close()
-			// TODO: Also close socket if opened.
+			c.Close()
 			return
 		}
 
-		if len(bets) == 0 {
-			log.Infof("action: read_bet_file | result: info | client_id: %v | file: %v | info: no_more_bets_to_read",
-				c.config.ID,
-				betFile,
-			)
-			betReader.Close()
-			// TODO: Also close socket if opened.
+		if c.CloseIfNoMoreBets(bets) {
 			return
 		}
 
@@ -118,17 +137,6 @@ func (c *Client) StartClientLoop(betFile string, maxBatchSize int) {
 			betFile,
 			len(bets),
 		)
-
-		for i := range bets {
-			log.Infof("action: bet_details | result: info | agency: %v | first_name: %v | last_name: %v |  dni: %v | Birthdate: %v | number: %v |",
-				c.config.ID,
-				bets[i].FirstName,
-				bets[i].LastName,
-				bets[i].Document,
-				bets[i].Birthdate,
-				bets[i].Number,
-			)
-		}
 
 		messageBets := []protocol.MessageBet{}
 		for i := range bets {
@@ -153,9 +161,7 @@ func (c *Client) StartClientLoop(betFile string, maxBatchSize int) {
 				c.config.ID,
 				err,
 			)
-			betReader.Close()
-			// TODO: Also close socket if opened.
-			c.conn.Close()
+			c.Close()
 			return
 		}
  
