@@ -83,6 +83,22 @@ func (c *Client) CloseIfNoMoreBets(bets []bet.Bet) bool {
 	return false
 }
 
+func (c *Client) PrepareBetsToBeSent(bets []bet.Bet) []protocol.MessageBet {
+	messageBets := []protocol.MessageBet{}
+	for i := range bets {
+		messageBets = append(messageBets, protocol.MessageBet{
+			Agency:    c.config.ID,
+			FirstName: bets[i].FirstName,
+			LastName:  bets[i].LastName,
+			Document:  bets[i].Document,
+			Birthdate: bets[i].Birthdate,
+			Number:    bets[i].Number,
+		})
+	}
+
+	return messageBets
+}
+
 func (c *Client) Close() {
 	c.running = false
 	if c.conn != nil {
@@ -112,7 +128,7 @@ func (c *Client) StartClientLoop(betFile string, maxBatchSize int) {
 	}()
 	
 	c.createClientReader(betFile)
-	
+
 	// There is an autoincremental msgID to identify every message sent
 	// Messages if the message amount threshold has not been surpassed
 	for msgID := 1; c.running; msgID++ {
@@ -138,23 +154,12 @@ func (c *Client) StartClientLoop(betFile string, maxBatchSize int) {
 			len(bets),
 		)
 
-		messageBets := []protocol.MessageBet{}
-		for i := range bets {
-			messageBets = append(messageBets, protocol.MessageBet{
-				Agency:    c.config.ID,
-				FirstName: bets[i].FirstName,
-				LastName:  bets[i].LastName,
-				Document:  bets[i].Document,
-				Birthdate: bets[i].Birthdate,
-				Number:    bets[i].Number,
-			})
-		}
-
 		// Create the connection the server in every loop iteration.
 		c.createClientSocket()
-
+		
 		cp := protocol.NewCommunicationProtocol(c.conn)
-
+		
+		messageBets := c.PrepareBetsToBeSent(bets)
 		err = cp.ProcessChunk(messageBets)
 		if err != nil {
 			log.Errorf("action: process_chunk | result: fail | client_id: %v | error: %v",
@@ -181,12 +186,6 @@ func (c *Client) StartClientLoop(betFile string, maxBatchSize int) {
 			)
 			return
 		}
-
-		// log.Infof("action: receive_ack | result: success | client_id: %v | bet_number: %v | ack_number: %v",
-		// 	c.config.ID,
-		// 	bet.Number,
-		// 	ackMessage.Number,
-		// )
 
 		// // Wait a time between sending one message and the next one
 		time.Sleep(c.config.LoopPeriod)
