@@ -65,7 +65,6 @@ class CommunicationProtocol:
             
             elif message_code == MessageBetChunk.TYPE:
                 # Read bets count
-                logging.info("LLEGA ACA")
                 total_bets_bytes = self._receive_exact(1)
                 total_bets = int.from_bytes(total_bets_bytes, byteorder="big")
                 

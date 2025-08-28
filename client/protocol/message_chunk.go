@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+const MaxBatchSizeBytes = 8000
 const MessageBetChunkType byte = 3
 
 type MessageBetChunk struct {
@@ -31,7 +32,7 @@ func (mc *MessageBetChunk) ToBytes() ([]byte, error) {
 	}
 
 	bytes_return := buf.Bytes()
-	if len(bytes_return) > 8000 {
+	if len(bytes_return) > MaxBatchSizeBytes {
 		return nil, fmt.Errorf("chunk size exceeds 8kB")
 	}
 
