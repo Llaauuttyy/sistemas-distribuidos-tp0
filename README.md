@@ -242,11 +242,85 @@ Se evitan **Short Writes**:
 - En **Python**: Se utiliza `sendall()` que intenta enviar todos los bytes o devuelve error.
 
 El protocolo consta con 2 mensajes:
-- MessageBet: Contiene los datos de la apuesta.
-- MessageAck: Ack del envío de la apuesta. Nota: Usa el número de lotería como ID.
+- `MessageBet`: Contiene los datos de la apuesta.
+- `MessageAck`: Ack del envío de la apuesta. ***Nota***: Usa el número de lotería como ID.
 
 Cuentan con parámetros de tamaño fijo por parámetro. A priori, se asume que alcanzan los bytes definidos para almacenar esos parámetros.
 
 Los mensajes saben cómo serializarse y deserializarse.
+
+Todos los tests pasan :white_check_mark:
+
+### Ejercicio 6
+Se modificó el archivo `mi-generador.py` para que agregue como volúmenes los archivos de apuestas para cada agencia.
+
+Se agregaron al protocolo los mensajes:
+- `MessageChunk`: Tiene todas las apuestas enviadas por el cliente. Está compuesto por el número de apuestas 
+y mensajes `MessageBet` con los datos de las mismas.
+- `MessageChunkError`: Informa que el **Chunk** no pudo ser almacenado por completo.
+
+Ahora como Ack ID se usa el número de la primera apuesta enviada en el **Chunk**.
+
+Se agregó un package llamado `reader` en Go que permite leer el archivo.
+- Se lee línea por línea el **Chunk**.
+- Vuelve a leer cuando termina de mandar un **Chunk**.
+- Matiene el **FD** abierto hasta terminar con todos los **Chunks**.
+- En caso de error cierra el **FD**.
+
+##### Tamaño del Chunk
+Como estaba previsto se utilizó el archivo `config.yaml` con el parámetro `batch: maxAmount` para definir el número máximo de apuestas por **Chunk**.
+A su vez, se respeta el máximo de 8kB, indistintamente del valor de `maxAmount`.
+
+- `MessageBet` tiene un total de `92 Bytes`.
+- `MessageChunk` tiene `2 Bytes + <nro_apuestas> * MessageBet`.
+
+Entonces, si tengo **89 apuestas**:
+Total Bytes = `2 + 89 * 92 = 8190 < 8kB`.
+- No se pasa, lo envía.
+
+Con **90 apuestas**:
+Total Bytes = `2 + 90 * 92 = 8282 > 8kB`. 
+- Se pasa, devuelve error.
+
+##### Snippet de lectura de Chunk desde el Servidor
+Una vez que se sabe que es un mensaje del tipo `MessageChunk` y se lee el siguiente byte que contiene la cantidad de apuestas, obtengo todos los bytes de todas las apuestas y las voy deserializando.
+```python
+bets = []
+                
+# Read all bets data
+total_bets_bytes = self._receive_exact(total_bets * (1 + MessageBet.PAYLOAD_BYTES))
+
+# Parse each bet
+bet_start = 1
+bet_end = bet_start + MessageBet.PAYLOAD_BYTES
+for _ in range(total_bets):
+    bet_bytes = total_bets_bytes[bet_start:bet_end]
+    bets.append(MessageBet.from_bytes(bet_bytes))
+
+    # Move to next bet
+    bet_start = bet_end + 1
+    bet_end = bet_start + MessageBet.PAYLOAD_BYTES
+
+return MessageBetChunk(bets)
+```
+
+#### Ejemplos de casos posibles
+**Éxito**
+1. Cliente lee `Chunk`.
+2. El `Chunk` pesa menos de **8kB**, lo envía al Servidor.
+3. Servidor recibe `Chunk`.
+4. Servidor almacena correctamente las apuestas.
+5. Servidor informa con ACK al Cliente.
+6. Cliente recibe ACK y vuelve al 1 hasta no tener más apuestas que enviar.
+
+**Error**
+1. Cliente lee `Chunk`.
+2. El `Chunk` pesa menos de **8kB**, lo envía al Servidor.
+3. Servidor recibe `Chunk`.
+4. Servidor no puede almacenar correctamente las apuestas.
+5. Servidor informa con `ChunkError` al Cliente.
+6. Cliente recibe `ChunkError`, libera recursos y termina.
+
+
 
 Todos los tests pasan :white_check_mark:

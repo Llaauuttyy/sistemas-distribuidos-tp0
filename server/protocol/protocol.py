@@ -69,8 +69,7 @@ class CommunicationProtocol:
                 total_bets = int.from_bytes(total_bets_bytes, byteorder="big")
                 
                 bets = []
-                # TODO: PREGUNTAR: Mejor obtener todos los bytes de una vez y luego ir particionando para crear los bets. Es mejor así o leer de a uno?
-
+                
                 # Read all bets data
                 total_bets_bytes = self._receive_exact(total_bets * (1 + MessageBet.PAYLOAD_BYTES))
 

@@ -57,14 +57,13 @@ class Server:
         communicator = CommunicationProtocol(client_sock)
 
         try:
-            addr = client_sock.getpeername()
-
             # Get bet from the client
             bet_chunk_message = communicator.receive_message()
             if bet_chunk_message is None:
                 raise Exception("Could not read message.")
-
-            # TODO IMPORTANTE: Comentar que en EJ5 se pasó el mensajeBet pero debería haberse pasado el objeto Bet.
+            
+            if not bet_chunk_message.bets:
+                raise Exception("Received empty bet chunk.")
 
             bets = []
             for bet in bet_chunk_message.bets:
@@ -78,11 +77,10 @@ class Server:
 
             # Send ACK to the client
             communicator.send_ack_message(bet_chunk_message.bets[0].number)
-        except Exception as e:
-            logging.error(f"action: receive_message | result: fail | error: {e}")
-
         except OSError as e:
             logging.error(f"action: receive_message | result: fail | error: {e}")
+        except Exception as e:
+            logging.error(f"action: receive_message | result: fail | error: Exception: {e}")
         finally:
             client_sock.close()
 
