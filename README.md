@@ -252,11 +252,11 @@ Los mensajes saben cómo serializarse y deserializarse.
 Todos los tests pasan :white_check_mark:
 
 ### Ejercicio 6
+#### Cambios Generales
 Se modificó el archivo `mi-generador.py` para que agregue como volúmenes los archivos de apuestas para cada agencia.
 
 Se agregaron al protocolo los mensajes:
-- `MessageChunk`: Tiene todas las apuestas enviadas por el cliente. Está compuesto por el número de apuestas 
-y mensajes `MessageBet` con los datos de las mismas.
+- `MessageChunk`: Tiene todas las apuestas enviadas por el cliente. Está compuesto por el número de apuestas y mensajes `MessageBet` con los datos de las mismas.
 - `MessageChunkError`: Informa que el **Chunk** no pudo ser almacenado por completo.
 
 Ahora como Ack ID se usa el número de la primera apuesta enviada en el **Chunk**.
@@ -273,6 +273,7 @@ A su vez, se respeta el máximo de 8kB, indistintamente del valor de `maxAmount`
 
 - `MessageBet` tiene un total de `92 Bytes`.
 - `MessageChunk` tiene `2 Bytes + <nro_apuestas> * MessageBet`.
+    - Los 2 Bytes mencionados son para el tipo de mensaje y para la cantidad de apuestas.
 
 Entonces, si tengo **89 apuestas**:
 Total Bytes = `2 + 89 * 92 = 8190 < 8kB`.
