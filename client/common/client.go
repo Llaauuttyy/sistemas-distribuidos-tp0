@@ -173,6 +173,7 @@ func (c *Client) StartClientLoop(betFile string, maxBatchSize int) {
 				c.config.ID,
 				err,
 			)
+			c.Close()
 			return
 		}
 
