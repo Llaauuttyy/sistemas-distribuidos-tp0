@@ -4,6 +4,7 @@ import signal
 
 from protocol.protocol import CommunicationProtocol
 from common.utils import store_bets
+from common.utils import Bet
 
 
 class Server:
@@ -33,6 +34,17 @@ class Server:
 
         self._terminate()
 
+    def __handle_store_bets(self, communicator: CommunicationProtocol, bets: list[Bet]):
+        try:
+            store_bets(bets)
+        except Exception as e:
+            logging.error(f'action: apuesta_recibida | result: fail | cantidad: {len(bets)}')
+            
+            # Send Chunk Error message to the client
+            communicator.send_chunk_error_message(bets[0].number)
+            
+            raise Exception("Could not store bets.")
+
     def __handle_client_connection(self, client_sock):
         """
         Read message from a specific client socket and closes the socket
@@ -45,25 +57,30 @@ class Server:
         communicator = CommunicationProtocol(client_sock)
 
         try:
-            addr = client_sock.getpeername()
-
             # Get bet from the client
-            bet_message = communicator.receive_message()
-            if bet_message is None:
+            bet_chunk_message = communicator.receive_message()
+            if bet_chunk_message is None:
                 raise Exception("Could not read message.")
-            # logging.info(f'action: bet_received | result: success | ip: {addr[0]} | bet: {bet_message}')
+            
+            if not bet_chunk_message.bets:
+                raise Exception("Received empty bet chunk.")
 
-            store_bets([bet_message])
+            bets = []
+            for bet in bet_chunk_message.bets:
+                # logging.info(f'action: bet_received | result: success | ip: {addr[0]} | bet: {bet}')
+                bets.append(Bet(bet.agency, bet.first_name, bet.last_name, bet.document, bet.birthdate, bet.number))
+
+            self.__handle_store_bets(communicator, bets)
+
             # Mixed languages in log to not modify tests.
-            logging.info(f'action: apuesta_almacenada | result: success | dni: {bet_message.document} | numero: {bet_message.number}')
+            logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(bet_chunk_message.bets)}')
 
             # Send ACK to the client
-            communicator.send_ack_message(bet_message.number)
-        except Exception as e:
-            logging.error(f"action: receive_message | result: fail | error: {e}")
-
+            communicator.send_ack_message(bet_chunk_message.bets[0].number)
         except OSError as e:
             logging.error(f"action: receive_message | result: fail | error: {e}")
+        except Exception as e:
+            logging.error(f"action: receive_message | result: fail | error: Exception: {e}")
         finally:
             client_sock.close()
 

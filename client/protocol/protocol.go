@@ -18,6 +18,23 @@ func NewCommunicationProtocol(conn net.Conn) *CommunicationProtocol {
 	return &CommunicationProtocol{conn: conn}
 }
 
+func (cp *CommunicationProtocol) ProcessChunk(bets []MessageBet) (error) {
+	// Create chunk
+	chunk := NewMessageBetChunk(bets)
+	chunkBytes, err := chunk.ToBytes()
+	
+	if err != nil {
+		return fmt.Errorf("error creating MessageBetChunk: %w", err)
+	}
+
+	// Send chunk
+	if err := cp.SendMessage(chunkBytes); err != nil {
+		return fmt.Errorf("error sending MessageBetChunk: %w", err)
+	}
+
+	return nil
+}
+
 // Avoid short-write: writes until the entire message is sent
 func (cp *CommunicationProtocol) SendMessage(msg []byte) error {
 	totalSent := 0
@@ -45,11 +62,11 @@ func (cp *CommunicationProtocol) SendBet(bet MessageBet) error {
 	return cp.SendMessage(bet.ToBytes())
 }
 
-func (cp *CommunicationProtocol) ReceiveAck(number string) (error) {
+func (cp *CommunicationProtocol) ReceiveAck(number string) (error, byte) {
 	// Receive the first byte to determine the message type
 	typeByte, err := cp.ReceiveExactBytes(1)
     if err != nil {
-        return err
+        return err, 0
     }
 
 	// Check the type of the message and process its bytes.
@@ -57,23 +74,36 @@ func (cp *CommunicationProtocol) ReceiveAck(number string) (error) {
 	case MessageAckType:
 		ackBytes, err := cp.ReceiveExactBytes(MessageAckFieldSizes["Number"])
 		if err != nil {
-			return fmt.Errorf("receiveMessage error: %w", err)
+			return fmt.Errorf("receiveMessage error: %w", err), 0
 		}
 
 		// Parse the ack message
 		ack, err := MessageAckFromBytes(ackBytes)
 		if err != nil {
-			return fmt.Errorf("error parsing MessageAck: %w", err)
+			return fmt.Errorf("error parsing MessageAck: %w", err), 0
 		}
 
 		// Validate that the ack number matches the sent bet number
 		if number != ack.Number {
-			return fmt.Errorf("invalid ack message: expected %v, received %v", number, ack.Number)
+			return fmt.Errorf("invalid ack message: expected %v, received %v", number, ack.Number), 0
 		}
 
-		return nil
+		return nil, 0
+
+	case MessageChunkErrorType:
+		errorBytes, err := cp.ReceiveExactBytes(MessageChunkErrorFieldSizes["Number"])
+		if err != nil {
+			return fmt.Errorf("receiveMessage error: %w", err), 0
+		}
+
+		chunkError, err := MessageChunkErrorFromBytes(errorBytes)
+		if err != nil {
+			return fmt.Errorf("error parsing MessageChunkError: %w", err), 0
+		}
+
+		return fmt.Errorf("server reported chunk error for bet number: %v", chunkError.Number), MessageChunkErrorType
 	default:
-		return fmt.Errorf("unknown message type: %v", typeByte[0])
+		return fmt.Errorf("unknown message type: %v", typeByte[0]), 0
 	}
 }
 
