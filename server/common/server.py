@@ -4,6 +4,7 @@ import signal
 
 from protocol.protocol import CommunicationProtocol
 from common.utils import store_bets
+from common.utils import Bet
 
 
 class Server:
@@ -52,13 +53,15 @@ class Server:
             if bet_message is None:
                 raise Exception("Could not read message.")
             # logging.info(f'action: bet_received | result: success | ip: {addr[0]} | bet: {bet_message}')
-
-            store_bets([bet_message])
+            bet = Bet(bet_message.agency, bet_message.first_name, bet_message.last_name,
+                      bet_message.document, bet_message.birthdate, bet_message.number)
+            
+            store_bets([bet])
             # Mixed languages in log to not modify tests.
-            logging.info(f'action: apuesta_almacenada | result: success | dni: {bet_message.document} | numero: {bet_message.number}')
+            logging.info(f'action: apuesta_almacenada | result: success | dni: {bet.document} | numero: {bet.number}')
 
             # Send ACK to the client
-            communicator.send_ack_message(bet_message.number)
+            communicator.send_ack_message(bet.number)
         except Exception as e:
             logging.error(f"action: receive_message | result: fail | error: {e}")
 
