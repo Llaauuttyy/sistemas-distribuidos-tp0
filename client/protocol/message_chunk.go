@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-const MaxBatchSizeBytes = 8000
+const MaxBatchSizeBytes = 8192
 const MessageBetChunkType byte = 3
 
 type MessageBetChunk struct {
