@@ -24,6 +24,8 @@ class Server:
 
         self._manager = Manager()
         self._active_agencies = self._manager.list()
+
+        # Shared value to indicate if the lottery has finished
         self._lottery_finished = self._manager.Value('b', False)
 
         self._handle_bets = Lock()
