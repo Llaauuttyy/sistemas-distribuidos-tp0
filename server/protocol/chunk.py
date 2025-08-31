@@ -33,7 +33,7 @@ class MessageBetChunk(Message):
             bet_bytes = data[bet_start:bet_end]
             bets.append(MessageBet.from_bytes(bet_bytes))
 
-            logging.info(f"APUESTA: {bets[-1]}")
+            # logging.info(f"APUESTA: {bets[-1]}")
             # Move to next bet
             bet_start = bet_end + 1
             bet_end = bet_start + MessageBet.PAYLOAD_BYTES

@@ -93,7 +93,7 @@ class CommunicationProtocol:
                 return MessageBetChunk.from_bytes(total_message_bytes, total_bets)
             
             elif message_code == MessageGetWinners.TYPE:
-                logging.info("LLEGA ACA?")
+                # logging.info("LLEGA ACA?")
                 message_data = self._receive_exact(MessageGetWinners.PAYLOAD_BYTES)
 
                 return MessageGetWinners.from_bytes(message_data)
