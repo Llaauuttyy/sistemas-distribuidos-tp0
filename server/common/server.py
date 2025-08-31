@@ -93,7 +93,7 @@ class Server:
             if message.message_type == MessageBetChunk.TYPE: 
                 bet_chunk_message = message
                 if bet_chunk_message is None:
-                    raise Exception("Could not read message.")
+                    raise Exception("Could not read message chunk.")
                 
                 # Track active agencies
                 self.__add_if_new_active_agency(bet_chunk_message.agency)
