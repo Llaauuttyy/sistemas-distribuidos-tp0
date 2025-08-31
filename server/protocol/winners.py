@@ -1,15 +1,6 @@
 from protocol.base import Message
 from protocol.bet import MessageBet
 
-import logging
-
-# TODO: Que haya un flag que tenga lo valores:
-# 1: Devuelve ganadores.
-# 2: Informa que todavia no hay sorteo.
-# Despues tengo funcion en el server para informar que no hay sorteo.
-# y manda este mensaje con flag 2, y del cliente leo este byte para definir si es 1 o 2.
-# Si es 2 intento mas tarde y si es 1 termino.
-
 REPORT_WINNERS = 1
 NO_LOTTERY_YET = 2
 

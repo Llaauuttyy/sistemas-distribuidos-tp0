@@ -46,19 +46,6 @@ class Server:
             
             raise Exception("Could not store bets.")
 
-    # TODO: Ej7 notes -------------------------------------------------------------------------------------------------
-    # - Que el mensaje de Chunk tenga un param is_last_chunk y en caso de serlo
-    # el server ya sabe que esa agencia ya terminó de mandar apuestas, 
-    # manda ACK normal y anota que esa agencia ya terminó. O mejor mando totalBets en 0 y con eso determino que terminó!!!.
-    # - En ese momento el Cliente recibe el ACK y empieza un loop enviando mensaje para
-    # consultar ganadores y si el servidor lo recibe y faltan agencias por terminar,
-    # responde con un winner in progress o algo así para que el cliente espere y vuelva a consultar.
-    # - El Chunk también debería tener el ID del agencia, así el server puede
-    # identificar qué agencias ya terminaron de mandar apuestas en un array/dict.
-    # - Recordar no editar el utils.py. En caso de crear funciones creo un nuevo utils.py o lo hago acá.
-    # - El mensaje de obtener Winners puede tener un flag de obtener ganadores o consultar ganadores. Para no tener 2 mensajes diferentes.
-    # ------------------------------------------------------------------------------------------------------------------
-
     def __add_if_new_active_agency(self, agency: str):
         if agency not in self._active_agencies:
             self._active_agencies.add(agency)
