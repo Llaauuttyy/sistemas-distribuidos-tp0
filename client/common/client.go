@@ -19,6 +19,7 @@ import (
 
 var log = logging.MustGetLogger("log")
 
+const maxAttempts = 5
 // ClientConfig Configuration used by the client
 type ClientConfig struct {
 	ID            string
@@ -78,15 +79,6 @@ func (c *Client) createClientReader(filePath string) error {
 	return nil
 }
 
-// func (c *Client) CloseIfNoMoreBets(bets []bet.Bet) bool {
-// 	if len(bets) == 0 {
-// 		c.Close()
-// 		return true
-// 	}
-
-// 	return false
-// }
-
 func (c *Client) CheckIfNoMoreBets(bets []bet.Bet) bool {
 	if len(bets) == 0 {
 		c.reader.Close()
@@ -97,7 +89,7 @@ func (c *Client) CheckIfNoMoreBets(bets []bet.Bet) bool {
 }
 
 func (c *Client) AskForWinners() {
-	for attempts := 1; c.running && attempts <= 5; attempts++ {
+	for attempts := 1; c.running && attempts <= maxAttempts; attempts++ {
 		log.Infof("action: ask_for_winners | result: in_progress | client_id: %v | attempt: %v", c.config.ID, attempts)
 		
 		c.createClientSocket()
@@ -127,7 +119,7 @@ func (c *Client) AskForWinners() {
 			log.Infof("action: receive_winners | result: no_lottery_yet | client_id: %v",
 				c.config.ID,
 			)
-			time.Sleep(2 * time.Second)
+			time.Sleep(c.config.LoopPeriod)
 			continue
 		}
 
@@ -143,10 +135,8 @@ func (c *Client) AskForWinners() {
 			)
 		}
 
-		break
+		c.running = false
 	}
-
-	c.Close()
 }
 
 func (c *Client) PrepareBetsToBeSent(bets []bet.Bet) []protocol.MessageBet {
@@ -215,7 +205,7 @@ func (c *Client) StartClientLoop(betFile string, maxBatchSize int) {
 		cp := protocol.NewCommunicationProtocol(c.conn)
 		
 		messageBets := c.PrepareBetsToBeSent(bets)
-		err = cp.ProcessChunk(c.config.ID ,messageBets)
+		err = cp.ProcessChunk(c.config.ID, messageBets)
 		if err != nil {
 			log.Errorf("action: process_chunk | result: fail | client_id: %v | error: %v",
 				c.config.ID,
@@ -237,7 +227,6 @@ func (c *Client) StartClientLoop(betFile string, maxBatchSize int) {
 			betNumber,
 		)
 		
-		// Code 4 means chunk failed to store.
 		err, code := cp.ReceiveAck(betNumber)
 		c.conn.Close()
 
@@ -254,10 +243,9 @@ func (c *Client) StartClientLoop(betFile string, maxBatchSize int) {
 		time.Sleep(c.config.LoopPeriod)
 	}
 
-	// TODO: Agrego While que le pegue al servidor hasta obtener los ganadores o llegar a 5 intentos?
-	// en el while tambien debo tener la condicion de client running, por si me mandan señal, tengo que cortar.
-
+	// Once the client has sent all its messages, it will ask for winners
 	c.AskForWinners()
+	c.Close()
 }
 
 func (c *Client) Close() {

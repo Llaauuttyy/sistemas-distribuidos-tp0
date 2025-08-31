@@ -17,6 +17,7 @@ class Server:
         self._server_socket.listen(listen_backlog)
         self._server_socket.settimeout(0.5)
         self._client_socket = None
+        
         self._running = True
         self._active_agencies = set()
         self._lottery_finished = False
@@ -124,8 +125,6 @@ class Server:
                     communicator.send_winners_message(winners)
                 else:
                     communicator.send_winners_message(no_lottery_yet=True)
-
-
         except OSError as e:
             logging.error(f"action: receive_message | result: fail | error: {e}")
         except Exception as e:
