@@ -322,6 +322,22 @@ return MessageBetChunk(bets)
 5. Servidor informa con `ChunkError` al Cliente.
 6. Cliente recibe `ChunkError`, libera recursos y termina.
 
+Todos los tests pasan :white_check_mark:
 
+### Ejercicio 7
+Supongo que todas las agencias activas llegan a enviar apuestas antes de que alguna pregunte por los ganadores.
+
+#### Cambios realizados
+- Se agregó al servidor el set `_active_agencies` para conocer a las agencias que están enviando apuestas.
+- Se agregó al servidor el booleano `_lottery_finished` que indica que se realizó el sorteo cuando `_active_agencies` es vacío.
+- Se notifica al servidor al terminar de mandar **Chunks** con un `MessageChunk` sin apuestas.
+- Se agregó el parámetro `agency` al `MessageChunk` para poder identificar a la agencia cuando termina de mandar apuestas.
+    - El cual consta de 8 bytes, por lo tanto el *máximo de apuestas* para un **Chunk** disminuye a **88**.
+- Se creó el mensaje `MessageGetWinners` para consultar por los ganadores del sorteo pertenecientes a la agencia que consulta.
+- Se creó el mensaje `MessageWinners` con un flag que indica si todavía no se realizó el sorteo `NO_LOTTERY_YET` o si ya se realizó `REPORT_WINNERS` y devuelve los ganadores para esa agencia.
+- Una agencia pregunta 5 veces por los ganadores y si en todas recibe `NO_LOTTERY_YET`, termina su ejecución.
 
 Todos los tests pasan :white_check_mark:
+
+**Nota**: Se cambiaron variables que debían ser constantes y que se estaban utilizando como constantes en todos los mensajes del protocolo del lado del cliente (**Golang**).
+***Importante***: Este mismo cambio debería aplicar para los ejercicios anteriores.
