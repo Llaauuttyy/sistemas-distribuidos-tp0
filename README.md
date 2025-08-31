@@ -341,3 +341,15 @@ Todos los tests pasan :white_check_mark:
 
 **Nota**: Se cambiaron variables que debían ser constantes y que se estaban utilizando como constantes en todos los mensajes del protocolo del lado del cliente (**Golang**).
 ***Importante***: Este mismo cambio debería aplicar hasta el ejercicio 5 inclusive.
+
+### Ejercicio 8
+Se utilizó **multiprocessing** para evitar las limitaciones que tiene threading por la acción del GIL de Python.
+Con **multiprocessing** se crea un proceso por cada conexión. Al no compartir memoria se utiliza `Manager()` para compartir una lista de agencias activas y un booleano que indica si terminó el sorteo. Básicamente son `_active_agencies` y `_lottery_finished` del ejercicio anterior.
+
+Se hace uso de dos **Locks**. 
+- `_handle_bets` Para el acceso a archivos (*leer o escribir*). 
+- `_handle_agencies` Para editar la lista de agencias activas y el booleano de sorteo.
+
+Todos los tests pasan :white_check_mark:
+
+Todos los tests de todos los ejercicios pasan :white_check_mark:
