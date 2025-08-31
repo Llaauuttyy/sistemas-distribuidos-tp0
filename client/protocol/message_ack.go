@@ -11,16 +11,15 @@ type MessageAck struct {
 	Number string
 }
 
-var MessageAckFieldSizes = map[string]int{
-	"Number": 8,
-}
+// Field sizes in bytes
+const MessageAckNumberSize = 8
 
 func MessageAckFromBytes(data []byte) (*MessageAck, error) {
-	if len(data) < MessageAckFieldSizes["Number"] {
+	if len(data) < MessageAckNumberSize {
 		return nil, fmt.Errorf("data too short for MessageAck")
 	}
 
-	numberBytes := data[:MessageAckFieldSizes["Number"]]
+	numberBytes := data[:MessageAckNumberSize]
 
 	// Convert bytes to number
 	number := binary.BigEndian.Uint64(numberBytes)

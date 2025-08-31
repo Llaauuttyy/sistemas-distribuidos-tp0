@@ -16,14 +16,14 @@ type MessageBet struct {
 }
 
 // Field sizes in bytes
-var MessageBetFieldSizes = map[string]int{
-	"Agency":    20,
-	"FirstName": 30,
-	"LastName":  15,
-	"Document":  8,
-	"Birthdate": 10,
-	"Number":    8,
-}
+const (
+	MessageBetAgencySize	= 8
+	MessageBetFirstNameSize	= 30
+	MessageBetLastNameSize	= 15
+	MessageBetDocumentSize	= 8
+	MessageBetBirthdateSize	= 10
+	MessageBetNumberSize	= 8
+)
 
 func (m *MessageBet) ToBytes() []byte {
 	buf := new(bytes.Buffer)
@@ -40,12 +40,12 @@ func (m *MessageBet) ToBytes() []byte {
 		buf.Write(data)
 	}
 
-	writeParams(m.Agency, MessageBetFieldSizes["Agency"])
-	writeParams(m.FirstName, MessageBetFieldSizes["FirstName"])
-	writeParams(m.LastName, MessageBetFieldSizes["LastName"])
-	writeParams(m.Document, MessageBetFieldSizes["Document"])
-	writeParams(m.Birthdate, MessageBetFieldSizes["Birthdate"])
-	writeParams(m.Number, MessageBetFieldSizes["Number"])
+	writeParams(m.Agency, MessageBetAgencySize)
+	writeParams(m.FirstName, MessageBetFirstNameSize)
+	writeParams(m.LastName, MessageBetLastNameSize)
+	writeParams(m.Document, MessageBetDocumentSize)
+	writeParams(m.Birthdate, MessageBetBirthdateSize)
+	writeParams(m.Number, MessageBetNumberSize)
 
 	return buf.Bytes()
 }

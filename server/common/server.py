@@ -3,9 +3,8 @@ import logging
 import signal
 
 from protocol.protocol import CommunicationProtocol
-from common.utils import store_bets
+from common.utils import store_bets, load_bets, has_won
 from common.utils import Bet
-
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -17,6 +16,8 @@ class Server:
         self._server_socket.settimeout(0.5)
         self._client_socket = None
         self._running = True
+        self._active_agencies = set()
+        self._lottery_finished = False
 
     def run(self):
         """
@@ -45,6 +46,45 @@ class Server:
             
             raise Exception("Could not store bets.")
 
+    # TODO: Ej7 notes -------------------------------------------------------------------------------------------------
+    # - Que el mensaje de Chunk tenga un param is_last_chunk y en caso de serlo
+    # el server ya sabe que esa agencia ya terminó de mandar apuestas, 
+    # manda ACK normal y anota que esa agencia ya terminó. O mejor mando totalBets en 0 y con eso determino que terminó!!!.
+    # - En ese momento el Cliente recibe el ACK y empieza un loop enviando mensaje para
+    # consultar ganadores y si el servidor lo recibe y faltan agencias por terminar,
+    # responde con un winner in progress o algo así para que el cliente espere y vuelva a consultar.
+    # - El Chunk también debería tener el ID del agencia, así el server puede
+    # identificar qué agencias ya terminaron de mandar apuestas en un array/dict.
+    # - Recordar no editar el utils.py. En caso de crear funciones creo un nuevo utils.py o lo hago acá.
+    # - El mensaje de obtener Winners puede tener un flag de obtener ganadores o consultar ganadores. Para no tener 2 mensajes diferentes.
+    # ------------------------------------------------------------------------------------------------------------------
+
+    def __add_if_new_active_agency(self, agency: str):
+        if agency not in self._active_agencies:
+            self._active_agencies.add(agency)
+            logging.info(f"action: new_active_agency | result: success | agency: {agency}")
+
+        logging.info(f"action: total_active_agencies | result: success | agencies: {self._active_agencies}")
+
+    def __set_agency_as_finished(self, agency: str):
+        self._active_agencies.remove(agency)
+        logging.info(f"action: agency_finished | result: success | agency: {agency}")
+
+        if not self._active_agencies:
+            self._lottery_finished = True
+            logging.info("action: sorteo | result: success")
+
+    def __get_winners(self, agency: str) -> list[str]:
+        bets_stored = load_bets()
+
+        winners = []
+
+        for bet in bets_stored:
+            if has_won(bet) and bet.agency == int(agency):
+                winners.append(bet.document)
+
+        return winners
+
     def __handle_client_connection(self, client_sock):
         """
         Read message from a specific client socket and closes the socket
@@ -58,25 +98,47 @@ class Server:
 
         try:
             # Get bet from the client
-            bet_chunk_message = communicator.receive_message()
-            if bet_chunk_message is None:
-                raise Exception("Could not read message.")
+            message = communicator.receive_message()
+
+            # TODO: Remover constante hardcodeada.
+            if message.message_type == 3: 
+                bet_chunk_message = message
+                if bet_chunk_message is None:
+                    raise Exception("Could not read message.")
+                
+                # Track active agencies
+                self.__add_if_new_active_agency(bet_chunk_message.agency)
+
+                ack_number = bet_chunk_message.bets[0].number if bet_chunk_message.bets else 0
+                
+                if not bet_chunk_message.bets:
+                    # No bets in chunk means agency is done sending bets.
+                    self.__set_agency_as_finished(bet_chunk_message.agency)
+
+                else:
+                    bets = []
+                    for bet in bet_chunk_message.bets:
+                        # logging.info(f'action: bet_received | result: success | ip: {addr[0]} | bet: {bet}')
+                        bets.append(Bet(bet.agency, bet.first_name, bet.last_name, bet.document, bet.birthdate, bet.number))
+
+                    self.__handle_store_bets(communicator, bets)
+
+                    # Mixed languages in log to not modify tests.
+                    logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(bet_chunk_message.bets)}')
+                    
+                # Send ACK to the client
+                communicator.send_ack_message(ack_number)
             
-            if not bet_chunk_message.bets:
-                raise Exception("Received empty bet chunk.")
+            # TODO: Remover constantes hardcodeadas.
+            elif message.message_type == 5:
+                if self._lottery_finished:
+                    winners = self.__get_winners(message.agency)
 
-            bets = []
-            for bet in bet_chunk_message.bets:
-                # logging.info(f'action: bet_received | result: success | ip: {addr[0]} | bet: {bet}')
-                bets.append(Bet(bet.agency, bet.first_name, bet.last_name, bet.document, bet.birthdate, bet.number))
+                    communicator.send_winners_message(winners)
+                else:
+                    communicator.send_winners_message(no_lottery_yet=True)
 
-            self.__handle_store_bets(communicator, bets)
 
-            # Mixed languages in log to not modify tests.
-            logging.info(f'action: apuesta_recibida | result: success | cantidad: {len(bet_chunk_message.bets)}')
-
-            # Send ACK to the client
-            communicator.send_ack_message(bet_chunk_message.bets[0].number)
         except OSError as e:
             logging.error(f"action: receive_message | result: fail | error: {e}")
         except Exception as e:

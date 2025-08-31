@@ -3,7 +3,7 @@ from protocol.base import Message
 class MessageBet(Message):
     TYPE = 2
     FIELD_SIZES = {
-        "agency": 20,
+        "agency": 8,
         "first_name": 30,
         "last_name": 15,
         "document": 8,
