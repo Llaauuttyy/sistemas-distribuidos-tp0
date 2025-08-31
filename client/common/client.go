@@ -90,8 +90,6 @@ func (c *Client) CheckIfNoMoreBets(bets []bet.Bet) bool {
 
 func (c *Client) AskForWinners() {
 	for attempts := 1; c.running && attempts <= maxAttempts; attempts++ {
-		// log.Infof("action: ask_for_winners | result: in_progress | client_id: %v | attempt: %v", c.config.ID, attempts)
-		
 		c.createClientSocket()
 			
 		cp := protocol.NewCommunicationProtocol(c.conn)
@@ -123,21 +121,9 @@ func (c *Client) AskForWinners() {
 			continue
 		}
 
-		// log.Infof("action: receive_winners | result: success | client_id: %v | total_winners: %v",
-		// 	c.config.ID,
-		// 	winnersMessage.TotalWinners,
-		// )
-
 		log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v ",
 			winnersMessage.TotalWinners,
 		)
-
-		// for winner := range winnersMessage.Winners {
-		// 	log.Infof("action: winner | result: success | client_id: %v | winner_document: %v",
-		// 		c.config.ID,
-		// 		winnersMessage.Winners[winner],
-		// 	)
-		// }
 
 		c.running = false
 	}
