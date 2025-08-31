@@ -4,6 +4,7 @@ import (
 	"net"
 	"fmt"
 	"io"
+	"encoding/binary"
 
 	"github.com/op/go-logging"
 )
@@ -18,11 +19,62 @@ func NewCommunicationProtocol(conn net.Conn) *CommunicationProtocol {
 	return &CommunicationProtocol{conn: conn}
 }
 
-func (cp *CommunicationProtocol) ProcessChunk(bets []MessageBet) (error) {
+func (cp *CommunicationProtocol) SendGetWinners(agency string) (error) {
+	getWwinners := NewMessageGetWinners(agency)
+	
+	err := cp.SendMessage(getWwinners.ToBytes()); 
+	if err != nil {
+		return fmt.Errorf("error sending MessageGetWinners: %w", err)
+	}
+
+	return nil
+}
+
+func (cp *CommunicationProtocol) ReceiveWinners() (*MessageWinners, error) {
+	// Receive the first byte to determine the message type
+	typeByte, err := cp.ReceiveExactBytes(1)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check the type of the message and process its bytes.
+	switch typeByte[0] {
+	case MessageWinnersType:
+		totalWinnersBytes, err := cp.ReceiveExactBytes(MessageWinnersTotalWinnersSize)
+		if err != nil {
+			return nil, fmt.Errorf("receiveMessage error: %w", err)
+		}
+
+		totalWinners := int(binary.BigEndian.Uint64(totalWinnersBytes))
+
+		messageBytes, err := cp.ReceiveExactBytes(MessageWinnersFlagSize + totalWinners * WinnerLength)
+		if err != nil {
+			return nil, fmt.Errorf("receiveMessage error while getting winners bytes: %w", err)
+		}
+
+		messageWinners, err := MessageWinnersFromBytes(messageBytes, totalWinners)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing MessageWinners: %w", err)
+		}
+
+		return messageWinners, nil
+	
+	default:
+		return nil, fmt.Errorf("unknown message type for MessageWinners: %v", typeByte[0])
+	}
+}
+
+func (cp *CommunicationProtocol) ProcessChunk(agency string, bets []MessageBet) (error) {
 	// Create chunk
-	chunk := NewMessageBetChunk(bets)
+	chunk := NewMessageBetChunk(agency, bets)
 	chunkBytes, err := chunk.ToBytes()
 	
+	log.Infof("action: send_chunk | result: in_progress | client_id: %v | chunk_size: %v | number_of_bets: %v",
+		agency,
+		len(chunkBytes),
+		len(bets),
+	)
+
 	if err != nil {
 		return fmt.Errorf("error creating MessageBetChunk: %w", err)
 	}
@@ -53,7 +105,7 @@ func (cp *CommunicationProtocol) ReceiveExactBytes(size int) ([]byte, error) {
 	buf := make([]byte, size)
 	_, err := io.ReadFull(cp.conn, buf)
 	if err != nil {
-		return nil, fmt.Errorf("receiveMessage error: %w", err)
+		return nil, fmt.Errorf("receiveMessageBytes error: %w", err)
 	}
 	return buf, nil
 }
@@ -72,7 +124,7 @@ func (cp *CommunicationProtocol) ReceiveAck(number string) (error, byte) {
 	// Check the type of the message and process its bytes.
 	switch typeByte[0] {
 	case MessageAckType:
-		ackBytes, err := cp.ReceiveExactBytes(MessageAckFieldSizes["Number"])
+		ackBytes, err := cp.ReceiveExactBytes(MessageAckNumberSize)
 		if err != nil {
 			return fmt.Errorf("receiveMessage error: %w", err), 0
 		}
@@ -91,7 +143,7 @@ func (cp *CommunicationProtocol) ReceiveAck(number string) (error, byte) {
 		return nil, 0
 
 	case MessageChunkErrorType:
-		errorBytes, err := cp.ReceiveExactBytes(MessageChunkErrorFieldSizes["Number"])
+		errorBytes, err := cp.ReceiveExactBytes(MessageChunkErrorNumberSize)
 		if err != nil {
 			return fmt.Errorf("receiveMessage error: %w", err), 0
 		}

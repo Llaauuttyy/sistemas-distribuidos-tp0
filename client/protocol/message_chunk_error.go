@@ -11,16 +11,15 @@ type MessageChunkError struct {
 	Number string
 }
 
-var MessageChunkErrorFieldSizes = map[string]int{
-	"Number": 8,
-}
+// Field sizes in bytes
+const MessageChunkErrorNumberSize = 8
 
 func MessageChunkErrorFromBytes(data []byte) (*MessageChunkError, error) {
-	if len(data) < MessageAckFieldSizes["Number"] {
-		return nil, fmt.Errorf("data too short for MessageAck")
+	if len(data) < MessageChunkErrorNumberSize {
+		return nil, fmt.Errorf("data too short for MessageChunkError")
 	}
 
-	numberBytes := data[:MessageAckFieldSizes["Number"]]
+	numberBytes := data[:MessageChunkErrorNumberSize]
 
 	// Convert bytes to number
 	number := binary.BigEndian.Uint64(numberBytes)

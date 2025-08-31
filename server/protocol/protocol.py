@@ -4,6 +4,8 @@ from protocol.ack import MessageACK
 from protocol.bet import MessageBet
 from protocol.chunk import MessageBetChunk
 from protocol.chunk_error import MessageChunkError
+from protocol.get_winners import MessageGetWinners
+from protocol.winners import MessageWinners, REPORT_WINNERS, NO_LOTTERY_YET
 
 class CommunicationProtocol:
     def __init__(self, socket):
@@ -48,6 +50,23 @@ class CommunicationProtocol:
             logging.error(f"action: send_chunk_error_message | result: fail | error: {e}")
             raise Exception(f"Could not send Chunk Error message: {e}")
 
+    def send_winners_message(self, winners: list[str] = [], no_lottery_yet=False):
+        """
+        Send a Winners message to the connected socket.
+        """
+        try:
+            if no_lottery_yet:
+                # No winners yet
+                winners_message = MessageWinners(flag=NO_LOTTERY_YET, winners=[])
+            else:
+                # Report winners
+                winners_message = MessageWinners(flag=REPORT_WINNERS, winners=winners)
+            
+            self._send_exact(winners_message.to_bytes())
+        except OSError as e:
+            logging.error(f"action: send_winners_message | result: fail | error: {e}")
+            raise Exception(f"Could not send Winners message: {e}")
+
     def receive_message(self):
         """
         Receive a message from the connected socket.
@@ -68,23 +87,16 @@ class CommunicationProtocol:
                 total_bets_bytes = self._receive_exact(1)
                 total_bets = int.from_bytes(total_bets_bytes, byteorder="big")
                 
-                bets = []
-                
                 # Read all bets data
-                total_bets_bytes = self._receive_exact(total_bets * (1 + MessageBet.PAYLOAD_BYTES))
+                total_message_bytes = self._receive_exact(MessageBetChunk.PAYLOAD_BYTES + total_bets * (1 + MessageBet.PAYLOAD_BYTES))
 
-                # Parse each bet
-                bet_start = 1
-                bet_end = bet_start + MessageBet.PAYLOAD_BYTES
-                for _ in range(total_bets):
-                    bet_bytes = total_bets_bytes[bet_start:bet_end]
-                    bets.append(MessageBet.from_bytes(bet_bytes))
+                return MessageBetChunk.from_bytes(total_message_bytes, total_bets)
+            
+            elif message_code == MessageGetWinners.TYPE:
+                # logging.info("LLEGA ACA?")
+                message_data = self._receive_exact(MessageGetWinners.PAYLOAD_BYTES)
 
-                    # Move to next bet
-                    bet_start = bet_end + 1
-                    bet_end = bet_start + MessageBet.PAYLOAD_BYTES
-                
-                return MessageBetChunk(bets)
+                return MessageGetWinners.from_bytes(message_data)
             
             else: 
                 logging.error(f"action: receive_message | result: fail | error: Unknown message type {message_code}")
