@@ -325,7 +325,7 @@ return MessageBetChunk(bets)
 Todos los tests pasan :white_check_mark:
 
 ### Ejercicio 7
-Supongo que todas las agencias activas llegan a enviar apuestas antes de que alguna pregunte por los ganadores.
+Supongo que todas las agencias activas llegan a enviar al menos un **Chunk** antes de que alguna pregunte por los ganadores.
 
 #### Cambios realizados
 - Se agregó al servidor el set `_active_agencies` para conocer a las agencias que están enviando apuestas.
