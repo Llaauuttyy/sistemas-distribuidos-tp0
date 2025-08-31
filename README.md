@@ -340,4 +340,4 @@ Supongo que todas las agencias activas llegan a enviar al menos un **Chunk** ant
 Todos los tests pasan :white_check_mark:
 
 **Nota**: Se cambiaron variables que debían ser constantes y que se estaban utilizando como constantes en todos los mensajes del protocolo del lado del cliente (**Golang**).
-***Importante***: Este mismo cambio debería aplicar para los ejercicios anteriores.
+***Importante***: Este mismo cambio debería aplicar hasta el ejercicio 5 inclusive.
