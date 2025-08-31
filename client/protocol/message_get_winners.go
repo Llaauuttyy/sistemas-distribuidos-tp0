@@ -23,15 +23,8 @@ func (mc *MessageGetWinners) ToBytes() ([]byte) {
 	buf := new(bytes.Buffer)
 	buf.WriteByte(MessageGetWinnersType)
 
-	// Convert string to byte slice
-	data := []byte(mc.Agency)
-	size := MessageGetWinnersAgencySize
-	if len(data) < size {
-		padding := make([]byte, size-len(data))
-		// Fill up space left using null bytes
-		data = append(data, padding...)
-	}
-	buf.Write(data)
+	// Write agency with padding
+	WriteWithPadding(buf, mc.Agency, MessageGetWinnersAgencySize)
 
 	return buf.Bytes()
 }

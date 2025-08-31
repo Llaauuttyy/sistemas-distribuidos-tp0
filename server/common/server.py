@@ -3,6 +3,8 @@ import logging
 import signal
 
 from protocol.protocol import CommunicationProtocol
+from protocol.chunk import MessageBetChunk
+from protocol.get_winners import MessageGetWinners
 from common.utils import store_bets, load_bets, has_won
 from common.utils import Bet
 
@@ -87,8 +89,7 @@ class Server:
             # Get bet from the client
             message = communicator.receive_message()
 
-            # TODO: Remover constante hardcodeada.
-            if message.message_type == 3: 
+            if message.message_type == MessageBetChunk.TYPE: 
                 bet_chunk_message = message
                 if bet_chunk_message is None:
                     raise Exception("Could not read message.")
@@ -116,8 +117,7 @@ class Server:
                 # Send ACK to the client
                 communicator.send_ack_message(ack_number)
             
-            # TODO: Remover constantes hardcodeadas.
-            elif message.message_type == 5:
+            elif message.message_type == MessageGetWinners.TYPE:
                 if self._lottery_finished:
                     winners = self.__get_winners(message.agency)
 

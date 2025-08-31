@@ -33,21 +33,12 @@ func (mc *MessageBetChunk) ToBytes() ([]byte, error) {
 
 	log.Infof("Creating MessageBetChunk with %d bets for agency %s", mc.totalBets, mc.agency)
 
-	// TODO: Convertir a una funcion en utils para usarla en varios lados está este código.
-	// Convert string to byte slice
-	data := []byte(mc.agency)
 	size := MessageBetChunkAgencySize
 
-	log.Infof("Agency byte size: %d, data size: %d, resta: %d", size, len(data), size - len(data))
-	if len(data) < size {
-		padding := make([]byte, size-len(data))
-		// Fill up space left using null bytes
-		data = append(data, padding...)
-	}
-	buf.Write(data)
+	// Write agency with padding
+	WriteWithPadding(buf, mc.agency, size)
 
-	log.Infof("MessageBetChunk after writing agency has data in bytes: %d", data)
-
+	// Write each bet
 	for _, m := range mc.bets {
 		betBytes := m.ToBytes()
 		buf.Write(betBytes)
