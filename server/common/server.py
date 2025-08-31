@@ -170,17 +170,12 @@ class Server:
         self._running = False
 
     def _terminate(self):
-        # if self._client_socket:
-        #     logging.info("action: close_client_socket | result: in_progress")
-        #     self._client_socket.close()
-        #     logging.info("action: close_client_socket | result: success")
-
         self._server_socket.close()
         logging.info("action: close_server_socket | result: success")
 
         for child in self._childs:
             if child.is_alive():
-                # child.terminate()
+                child.terminate()
                 child.join()
             logging.info(f"action: child_process_terminated | result: success | pid: {child.pid}")
         
