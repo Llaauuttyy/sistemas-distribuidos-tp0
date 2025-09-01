@@ -59,6 +59,7 @@ func (c *Client) createClientSocket() error {
 			c.config.ID,
 			err,
 		)
+		return err
 	}
 	c.conn = conn
 	return nil
@@ -90,11 +91,19 @@ func (c *Client) CheckIfNoMoreBets(bets []bet.Bet) bool {
 
 func (c *Client) AskForWinners() {
 	for attempts := 1; c.running && attempts <= maxAttempts; attempts++ {
-		c.createClientSocket()
+		err := c.createClientSocket()
+		if err != nil {
+			log.Errorf("action: create_client_socket | result: fail | client_id: %v",
+				c.config.ID,
+				err,
+			)
+			c.Close()
+			return
+		}
 			
 		cp := protocol.NewCommunicationProtocol(c.conn)
 
-		err := cp.SendGetWinners(c.config.ID)
+		err = cp.SendGetWinners(c.config.ID)
 		if err != nil {
 			log.Errorf("action: send_get_winners | result: fail | client_id: %v | error: %v",
 				c.config.ID,
@@ -190,7 +199,15 @@ func (c *Client) StartClientLoop(betFile string, maxBatchSize int) {
 		)
 
 		// Create the connection the server in every loop iteration.
-		c.createClientSocket()
+		err = c.createClientSocket()
+		if err != nil {
+			log.Errorf("action: create_client_socket | result: fail | client_id: %v",
+				c.config.ID,
+				err,
+			)
+			c.Close()
+			return
+		}
 		
 		cp := protocol.NewCommunicationProtocol(c.conn)
 		
