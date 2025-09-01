@@ -350,6 +350,9 @@ Se hace uso de dos **Locks**.
 - `_handle_bets` Para el acceso a archivos (*leer o escribir*). 
 - `_handle_agencies` Para editar la lista de agencias activas y el booleano de sorteo.
 
+**IMPORTANTE**: Hay un cambio sobre la función de crear conexión del Cliente en **client.go** `createClientSocket` para que devuelva error y pueda cerrar bien en caso de falla.
+Este cambio debe tenerse en cuenta desde el **Ejercicio 4**.
+
 Todos los tests pasan :white_check_mark:
 
 Todos los tests de todos los ejercicios pasan :white_check_mark:
