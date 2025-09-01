@@ -177,7 +177,6 @@ class Server:
 
         for child in self._childs:
             if child.is_alive():
-                child.terminate()
                 child.join()
             logging.info(f"action: child_process_terminated | result: success | pid: {child.pid}")
         
