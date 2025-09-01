@@ -356,3 +356,6 @@ Este cambio debe tenerse en cuenta desde el **Ejercicio 4**.
 Todos los tests pasan :white_check_mark:
 
 Todos los tests de todos los ejercicios pasan :white_check_mark:
+
+Adjunto foto de los tests pasando:
+![Tests](./all-tests-passed.png)
