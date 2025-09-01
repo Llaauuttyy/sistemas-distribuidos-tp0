@@ -18,7 +18,6 @@ class Server:
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
         self._server_socket.settimeout(0.5)
-        # self._client_socket = None
         
         self._running = True
 
@@ -45,7 +44,6 @@ class Server:
         while self._running:
             client_socket = self.__accept_new_connection()
             if client_socket:
-                # self.__handle_client_connection(self._client_socket)
                 new_child_process = Process(target=self.__handle_client_connection, args=(client_socket,))
                 new_child_process.start()
 
@@ -82,10 +80,7 @@ class Server:
                     self._winners_by_agency[bet.agency] = self._manager.list()
                 
                 if has_won(bet):
-                    # logging.info(f"action: WINNER | result: success | agency: {bet.agency} | document: {bet.document} | number: {bet.number}")
                     self._winners_by_agency[bet.agency].append(bet.document)
-            
-            # logging.info(f"action: lottery_handled | result: success | winners_by_agency: {dict(self._winners_by_agency)}")
 
     def __set_agency_as_finished(self, agency: str):
         lottery = False
@@ -147,7 +142,6 @@ class Server:
                 else:
                     bets = []
                     for bet in bet_chunk_message.bets:
-                        # logging.info(f'action: bet_received | result: success | ip: {addr[0]} | bet: {bet}')
                         bets.append(Bet(bet.agency, bet.first_name, bet.last_name, bet.document, bet.birthdate, bet.number))
 
                     self.__handle_store_bets(communicator, bets)

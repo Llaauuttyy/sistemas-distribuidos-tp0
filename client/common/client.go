@@ -1,17 +1,13 @@
 package common
 
 import (
-	// "bufio"
-	// "fmt"
 	"os"
     "os/signal"
     "syscall"
 	"net"
 	"time"
-	// "strconv"
 	
 	"github.com/op/go-logging"
-	// "github.com/spf13/viper"
 	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/protocol"
 	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/bet"
 	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/reader"
