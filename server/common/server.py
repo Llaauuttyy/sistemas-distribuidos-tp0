@@ -27,6 +27,7 @@ class Server:
 
         # Shared value to indicate if the lottery has finished
         self._lottery_finished = self._manager.Value('b', False)
+        self._winners_by_agency = self._manager.dict()
 
         self._handle_bets = Lock()
         self._handle_agencies = Lock()
@@ -72,26 +73,42 @@ class Server:
 
             logging.info(f"action: total_active_agencies | result: success | agencies: {self._active_agencies}")
 
+    def __handle_lottery(self):
+        with self._handle_bets:
+            bets_stored = load_bets()
+
+            for bet in bets_stored:
+                if bet.agency not in self._winners_by_agency:
+                    self._winners_by_agency[bet.agency] = self._manager.list()
+                
+                if has_won(bet):
+                    # logging.info(f"action: WINNER | result: success | agency: {bet.agency} | document: {bet.document} | number: {bet.number}")
+                    self._winners_by_agency[bet.agency].append(bet.document)
+            
+            # logging.info(f"action: lottery_handled | result: success | winners_by_agency: {dict(self._winners_by_agency)}")
+
     def __set_agency_as_finished(self, agency: str):
         with self._handle_agencies:
             self._active_agencies.remove(agency)
             logging.info(f"action: agency_finished | result: success | agency: {agency}")
 
             if not self._active_agencies:
+                self.__handle_lottery()
+
+                # Lottery has finished, so agencies can request winners
                 self._lottery_finished.value = True
                 logging.info("action: sorteo | result: success")
 
     def __get_winners(self, agency: str) -> list[str]:
-        with self._handle_bets:
-            bets_stored = load_bets()
+        agency = int(agency)
+        if agency not in self._winners_by_agency.keys():
+            raise Exception("Agency has not sent any bets.")
+        
+        winners = []
+        for winner in self._winners_by_agency[agency]:
+            winners.append(winner)
 
-            winners = []
-
-            for bet in bets_stored:
-                if has_won(bet) and bet.agency == int(agency):
-                    winners.append(bet.document)
-
-            return winners
+        return winners
 
     def __handle_client_connection(self, client_sock):
         """
