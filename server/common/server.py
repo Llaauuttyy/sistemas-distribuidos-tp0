@@ -88,16 +88,21 @@ class Server:
             # logging.info(f"action: lottery_handled | result: success | winners_by_agency: {dict(self._winners_by_agency)}")
 
     def __set_agency_as_finished(self, agency: str):
+        lottery = False
         with self._handle_agencies:
             self._active_agencies.remove(agency)
             logging.info(f"action: agency_finished | result: success | agency: {agency}")
 
             if not self._active_agencies:
-                self.__handle_lottery()
+                # Avoid lock annidation.
+                lottery = True
 
-                # Lottery has finished, so agencies can request winners
-                self._lottery_finished.value = True
-                logging.info("action: sorteo | result: success")
+        if lottery:
+            self.__handle_lottery()
+
+            # Lottery has finished, so agencies can request winners
+            self._lottery_finished.value = True
+            logging.info("action: sorteo | result: success")
 
     def __get_winners(self, agency: str) -> list[str]:
         agency = int(agency)
