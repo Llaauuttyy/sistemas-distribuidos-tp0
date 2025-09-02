@@ -203,6 +203,6 @@ class Server:
                     child.join()
                 logging.info(f"action: child_process_terminated | result: success | pid: {child.pid}")
             except Exception as e:
-                logging.error(f"action: child_process_terminated | result: fail | error: {e}")
+                logging.error(f"action: child_process_terminated | result: fail | pid: {child.pid} | error: {e}")
         
         logging.info("action: graceful_shutdown | result: success")
