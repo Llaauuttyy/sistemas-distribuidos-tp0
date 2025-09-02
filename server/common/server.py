@@ -49,7 +49,13 @@ class Server:
 
                 self._childs.append(new_child_process)
 
+            self.__untrack_finished_childs()
+
         self._terminate()
+    
+    def __untrack_finished_childs(self):
+        # Remove finished child processes from the list
+        self._childs = [child for child in self._childs if child.is_alive()]
 
     def __handle_store_bets(self, communicator: CommunicationProtocol, bets: list[Bet]):
         with self._handle_bets:
@@ -192,8 +198,11 @@ class Server:
         logging.info("action: close_server_socket | result: success")
 
         for child in self._childs:
-            if child.is_alive():
-                child.join()
-            logging.info(f"action: child_process_terminated | result: success | pid: {child.pid}")
+            try:
+                if child.is_alive():
+                    child.join()
+                logging.info(f"action: child_process_terminated | result: success | pid: {child.pid}")
+            except Exception as e:
+                logging.error(f"action: child_process_terminated | result: fail | pid: {child.pid} | error: {e}")
         
         logging.info("action: graceful_shutdown | result: success")
