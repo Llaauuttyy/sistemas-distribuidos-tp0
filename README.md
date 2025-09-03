@@ -343,7 +343,7 @@ Todos los tests pasan :white_check_mark:
 ***Importante***: Este mismo cambio debería aplicar hasta el **Ejercicio 5** inclusive.
 
 ### Ejercicio 8
-Se utilizó **multiprocessing** para evitar las limitaciones que tiene threading por la acción del GIL de Python.
+Se utilizó **multiprocessing** para evitar las limitaciones que tiene threading por la acción del GIL de Python. De esta forma se asegura el aislamiento entre conexiones y que sean ejecutadas de forma paralela.
 Con **multiprocessing** se crea un proceso por cada conexión. Al no compartir memoria se utiliza `Manager()` para compartir una lista de agencias activas y un booleano que indica si terminó el sorteo. Básicamente son `_active_agencies` y `_lottery_finished` del ejercicio anterior.
 
 Se hace uso de dos **Locks**. 
@@ -362,3 +362,6 @@ Todos los tests de todos los ejercicios pasan :white_check_mark:
 
 Adjunto foto de los tests pasando:
 ![Tests](./all-tests-passed.png)
+
+Los tests pasan con la nueva versión de los mismos.
+**Nota**: Hay veces en las que algún test del **Ejercicio 6** falla porque no se llega a levantar el servidor a tiempo, pero la lógica funciona.
