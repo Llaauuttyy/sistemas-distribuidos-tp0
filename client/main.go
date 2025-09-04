@@ -119,15 +119,6 @@ func main() {
 		LoopPeriod:    v.GetDuration("loop.period"),
 	}
 
-	// bet := bet.Bet{
-	// 	Agency:    fmt.Sprintf("%v", v.GetString("id")),
-	// 	FirstName: fmt.Sprintf("%v", v.GetString("nombre")),
-	// 	LastName:  fmt.Sprintf("%v", v.GetString("apellido")),
-	// 	Document:  fmt.Sprintf("%v", v.GetString("documento")),
-	// 	Birthdate: fmt.Sprintf("%v", v.GetString("nacimiento")),
-	// 	Number:    fmt.Sprintf("%v", v.GetString("numero")),
-	// }
-
 	betFile := fmt.Sprintf("./agency-%v.csv", v.GetString("id"))
 	maxBatchSize := v.GetInt("batch.maxAmount")
 

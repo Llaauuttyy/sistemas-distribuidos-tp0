@@ -8,6 +8,8 @@ from protocol.get_winners import MessageGetWinners
 from common.utils import store_bets, load_bets, has_won
 from common.utils import Bet
 
+from multiprocessing import Process, Lock, Manager
+
 class Server:
     def __init__(self, port, listen_backlog):
         # Initialize server socket
@@ -16,11 +18,19 @@ class Server:
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
         self._server_socket.settimeout(0.5)
-        self._client_socket = None
         
         self._running = True
-        self._active_agencies = set()
-        self._lottery_finished = False
+
+        self._manager = Manager()
+        self._active_agencies = self._manager.list()
+
+        # Shared value to indicate if the lottery has finished
+        self._lottery_finished = self._manager.Value('b', False)
+        self._winners_by_agency = self._manager.dict()
+
+        self._handle_bets = Lock()
+        self._handle_agencies = Lock()
+        self._childs = []
 
     def run(self):
         """
@@ -32,46 +42,77 @@ class Server:
         """
 
         while self._running:
-            self._client_socket = self.__accept_new_connection()
-            if self._client_socket:
-                self.__handle_client_connection(self._client_socket)
+            client_socket = self.__accept_new_connection()
+            if client_socket:
+                new_child_process = Process(target=self.__handle_client_connection, args=(client_socket,))
+                new_child_process.start()
+
+                self._childs.append(new_child_process)
+
+            self.__untrack_finished_childs()
 
         self._terminate()
+    
+    def __untrack_finished_childs(self):
+        # Remove finished child processes from the list
+        self._childs = [child for child in self._childs if child.is_alive()]
 
     def __handle_store_bets(self, communicator: CommunicationProtocol, bets: list[Bet]):
-        try:
-            store_bets(bets)
-        except Exception as e:
-            logging.error(f'action: apuesta_recibida | result: fail | cantidad: {len(bets)}')
-            
-            # Send Chunk Error message to the client
-            communicator.send_chunk_error_message(bets[0].number)
-            
-            raise Exception("Could not store bets.")
+        with self._handle_bets:
+            try:
+                store_bets(bets)
+            except Exception as e:
+                logging.error(f'action: apuesta_recibida | result: fail | cantidad: {len(bets)}')
+                
+                # Send Chunk Error message to the client
+                communicator.send_chunk_error_message(bets[0].number)
+                
+                raise Exception("Could not store bets.")
 
     def __add_if_new_active_agency(self, agency: str):
-        if agency not in self._active_agencies:
-            self._active_agencies.add(agency)
-            logging.info(f"action: new_active_agency | result: success | agency: {agency}")
+        with self._handle_agencies:
+            if agency not in self._active_agencies:
+                self._active_agencies.append(agency)
+                logging.info(f"action: new_active_agency | result: success | agency: {agency}")
 
-        logging.info(f"action: total_active_agencies | result: success | agencies: {self._active_agencies}")
+            logging.info(f"action: total_active_agencies | result: success | agencies: {self._active_agencies}")
+
+    def __handle_lottery(self):
+        with self._handle_bets:
+            bets_stored = load_bets()
+
+            for bet in bets_stored:
+                if bet.agency not in self._winners_by_agency:
+                    self._winners_by_agency[bet.agency] = self._manager.list()
+                
+                if has_won(bet):
+                    self._winners_by_agency[bet.agency].append(bet.document)
 
     def __set_agency_as_finished(self, agency: str):
-        self._active_agencies.remove(agency)
-        logging.info(f"action: agency_finished | result: success | agency: {agency}")
+        lottery = False
+        with self._handle_agencies:
+            self._active_agencies.remove(agency)
+            logging.info(f"action: agency_finished | result: success | agency: {agency}")
 
-        if not self._active_agencies:
-            self._lottery_finished = True
+            if not self._active_agencies:
+                # Avoid lock annidation.
+                lottery = True
+
+        if lottery:
+            self.__handle_lottery()
+
+            # Lottery has finished, so agencies can request winners
+            self._lottery_finished.value = True
             logging.info("action: sorteo | result: success")
 
     def __get_winners(self, agency: str) -> list[str]:
-        bets_stored = load_bets()
-
+        agency = int(agency)
+        if agency not in self._winners_by_agency.keys():
+            raise Exception("Agency has not sent any bets.")
+        
         winners = []
-
-        for bet in bets_stored:
-            if has_won(bet) and bet.agency == int(agency):
-                winners.append(bet.document)
+        for winner in self._winners_by_agency[agency]:
+            winners.append(winner)
 
         return winners
 
@@ -107,7 +148,6 @@ class Server:
                 else:
                     bets = []
                     for bet in bet_chunk_message.bets:
-                        # logging.info(f'action: bet_received | result: success | ip: {addr[0]} | bet: {bet}')
                         bets.append(Bet(bet.agency, bet.first_name, bet.last_name, bet.document, bet.birthdate, bet.number))
 
                     self.__handle_store_bets(communicator, bets)
@@ -119,7 +159,7 @@ class Server:
                 communicator.send_ack_message(ack_number)
             
             elif message.message_type == MessageGetWinners.TYPE:
-                if self._lottery_finished:
+                if self._lottery_finished.value:
                     winners = self.__get_winners(message.agency)
 
                     communicator.send_winners_message(winners)
@@ -154,11 +194,15 @@ class Server:
         self._running = False
 
     def _terminate(self):
-        if self._client_socket:
-            logging.info("action: close_client_socket | result: in_progress")
-            self._client_socket.close()
-            logging.info("action: close_client_socket | result: success")
-
         self._server_socket.close()
         logging.info("action: close_server_socket | result: success")
+
+        for child in self._childs:
+            try:
+                if child.is_alive():
+                    child.join()
+                logging.info(f"action: child_process_terminated | result: success | pid: {child.pid}")
+            except Exception as e:
+                logging.error(f"action: child_process_terminated | result: fail | pid: {child.pid} | error: {e}")
+        
         logging.info("action: graceful_shutdown | result: success")

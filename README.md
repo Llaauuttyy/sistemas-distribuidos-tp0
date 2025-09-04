@@ -340,4 +340,28 @@ Supongo que todas las agencias activas llegan a enviar al menos un **Chunk** ant
 Todos los tests pasan :white_check_mark:
 
 **Nota**: Se cambiaron variables que debían ser constantes y que se estaban utilizando como constantes en todos los mensajes del protocolo del lado del cliente (**Golang**).
-***Importante***: Este mismo cambio debería aplicar hasta el ejercicio 5 inclusive.
+***Importante***: Este mismo cambio debería aplicar hasta el **Ejercicio 5** inclusive.
+
+### Ejercicio 8
+Se utilizó **multiprocessing** para evitar las limitaciones que tiene threading por la acción del GIL de Python. De esta forma se asegura el aislamiento entre conexiones y que sean ejecutadas de forma paralela.
+Con **multiprocessing** se crea un proceso por cada conexión. Al no compartir memoria se utiliza `Manager()` para compartir una lista de agencias activas y un booleano que indica si terminó el sorteo. Básicamente son `_active_agencies` y `_lottery_finished` del ejercicio anterior.
+
+Se hace uso de dos **Locks**. 
+- `_handle_bets` Para el acceso a archivos (*leer o escribir*). 
+- `_handle_agencies` Para editar la lista de agencias activas y el booleano de sorteo.
+
+**IMPORTANTE**: 
+- Hay un cambio sobre la función de crear conexión del Cliente en **client.go** `createClientSocket` para que devuelva error y pueda cerrar bien en caso de falla.
+  - Este cambio debe tenerse en cuenta desde el **Ejercicio 4**.
+- Se modificó el servidor para que calcule los ganadores sólo **UNA VEZ**. Para eso se comparte un diccionario entre procesos `_winners_by_agency`. El mismo es calculado por el primer proceso que recibe el mensaje de la última agencia en terminar de mandar apuestas.
+  - Este cambio debe tenerse en cuenta desde el **Ejercicio 7** (*sin concurrencia en el 7*).
+
+Todos los tests pasan :white_check_mark:
+
+Todos los tests de todos los ejercicios pasan :white_check_mark:
+
+Adjunto foto de los tests pasando:
+![Tests](./all-tests-passed.png)
+
+Los tests pasan con la nueva versión de los mismos.
+**Nota**: Hay veces en las que algún test del **Ejercicio 6** falla porque no se llega a levantar el servidor a tiempo, pero la lógica funciona.
