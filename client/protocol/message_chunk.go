@@ -31,8 +31,6 @@ func (mc *MessageBetChunk) ToBytes() ([]byte, error) {
 
 	buf.WriteByte(byte(mc.totalBets))
 
-	log.Infof("Creating MessageBetChunk with %d bets for agency %s", mc.totalBets, mc.agency)
-
 	size := MessageBetChunkAgencySize
 
 	// Write agency with padding
@@ -45,8 +43,6 @@ func (mc *MessageBetChunk) ToBytes() ([]byte, error) {
 	}
 
 	bytes_return := buf.Bytes()
-
-	log.Infof("MessageBetChunk total size in bytes: %d", len(bytes_return))
 
 	if len(bytes_return) > MaxBatchSizeBytes {
 		return nil, fmt.Errorf("chunk size exceeds 8kB")
